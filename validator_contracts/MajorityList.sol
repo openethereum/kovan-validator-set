@@ -56,7 +56,7 @@ contract MajorityList {
     
     // Called when a validator should be removed.
     function reportBenign(address validator) onlyValidator {
-        return reportMalicious(validator);
+        reportMalicious(validator);
     }
 
     // Remove support for a validator.
