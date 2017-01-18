@@ -48,12 +48,18 @@ contract MajorityList {
         validatorsStatus[validator].support.voted[msg.sender] = true;
     }
 
-    // Remove support for a validator.
-    function againstValidator(address validator) onlyValidator {
+    // Called when a validator should be removed.
+    function reportMalicious(address validator) onlyValidator {
         removeSupport(msg.sender, validator);
         removeValidator(validator);
     }
     
+    // Called when a validator should be removed.
+    function reportBenign(address validator) onlyValidator {
+        reportMalicious(validator);
+    }
+
+    // Remove support for a validator.
     function removeSupport(address sender, address validator) private hasVotes(sender, validator) {
         validatorsStatus[validator].support.votes--;
         validatorsStatus[validator].support.voted[sender] = false;
