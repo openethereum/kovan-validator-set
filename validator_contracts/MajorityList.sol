@@ -81,8 +81,8 @@ contract MajorityList {
     }
 
     function logTransition() private {
-        ValidatorsChanged(block.blockhash(block.number - 1), transitionNonce, validatorsList);
         incrementTransitionNonce();
+        ValidatorsChanged(block.blockhash(block.number - 1), transitionNonce, validatorsList);
     }
 
     function incrementTransitionNonce() private on_new_block {
