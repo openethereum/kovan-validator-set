@@ -11,26 +11,26 @@ contract TestList {
 	        indices[validators[i]] = i;
 	    }
 	}
-    
+
 	// Called on every block to update node validator list.
     function getValidators() constant returns (address[]) {
 		return validators;
 	}
- 
+
 	// Expand the list of validators.
 	function addValidator(address validator) {
 		validators.push(validator);
 	}
 
 	// Remove a validator from the list.
-	function reportMalicious(address validator) {
+	function reportMalicious(address validator, uint blockNumber, bytes proof) {
 		validators[indices[validator]] = validators[validators.length-1];
 		delete indices[validator];
 		delete validators[validators.length-1];
 		validators.length--;
 	}
-	
-	function reportBenign(address validator) {
+
+	function reportBenign(address validator, uint blockNumber) {
 	    disliked = validator;
 	}
 }
