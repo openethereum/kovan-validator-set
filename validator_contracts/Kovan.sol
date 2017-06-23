@@ -39,7 +39,7 @@ contract MajorityList is ValidatorSet {
     }
 
     // System address, used by the block sealer.
-    address SYSTEM_ADDRESS = 2**160 - 2;
+    address SYSTEM_ADDRESS = 0xfffffffffffffffffffffffffffffffffffffffe;
     // Support can not be added once this number of validators is reached.
     uint public constant MAX_VALIDATORS = 30;
     // Time after which the validators will report a validator as malicious.
