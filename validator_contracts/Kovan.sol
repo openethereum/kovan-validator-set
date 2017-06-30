@@ -66,7 +66,7 @@ contract MajorityList is ValidatorSet {
 
     // Each validator is initially supported by all others.
     function MajorityList() {
-        validatorsList = [
+        pendingList = [
             // Etherscan
             0x00D6Cc1BA9cf89BD2e58009741f4F7325BAdc0ED,
             // Attores
@@ -96,13 +96,13 @@ contract MajorityList is ValidatorSet {
 
     // Has to be called once before any other methods are called.
     function initializeValidators() uninitialized {
-        for (uint j = 0; j < validatorsList.length; j++) {
-            address validator = validatorsList[j];
+        for (uint j = 0; j < pendingList.length; j++) {
+            address validator = pendingList[j];
             validatorsStatus[validator] = ValidatorStatus({
                 isValidator: true,
                 index: j,
                 support: initialSupport,
-                supported: validatorsList,
+                supported: pendingList,
                 benignMisbehaviour: AddressSet.Data({ count: 0 }),
             });
         }
