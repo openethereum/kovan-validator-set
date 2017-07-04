@@ -77,7 +77,6 @@ contract MajorityList is ValidatorSet {
             });
         }
         validatorsList = pendingList;
-        finalized = true;
     }
 
     // Called on every block to update node validator list.
