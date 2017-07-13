@@ -108,7 +108,7 @@ contract MajorityList is ValidatorSet {
         }
         initialized = true;
         validatorsList = pendingList;
-        finalized = true;
+        finalized = false;
     }
 
     // CONSENSUS ENGINE METHODS
