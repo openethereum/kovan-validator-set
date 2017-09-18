@@ -38,30 +38,26 @@ contract OuterSet is Owned, ValidatorSet {
 	}
 
 	address[] dummy;
-	function getValidators() constant returns (address[] _validators) {
-		/*
+	function getValidators() constant returns (address[] _v) {
 		assembly {
-			let x := mload(0x40)   //Find empty storage location using "free memory pointer"
-
+			_v := mload(0x40)   //Find empty storage location using "free memory pointer"
+			// TODO: invalid when oog
 			let success := staticcall(      //This is the critical change (Pop the top stack value)
 													5000, //5k gas
-													innerSet, //To addr
-													0,    //Inputs are stored at location x
-													0, //Inputs are 68 bits long
-													x,    //Store output over input (saves space)
+													innerSet_slot, //To addr
+													0,    // No input
+													0, // No input length
+													_v,    //Store output over input (saves space)
 													0x20) //Outputs are 32 bytes long
-
-			c := mload(x) //Assign output value to c
-			mstore(0x40,add(x,0x44)) // Set storage pointer to empty space
+			let size := returndatasize
+			returndatacopy(_v, _v, size)
 		}
-		*/
-		return dummy;
 	}
 }
 
 contract InnerSet {
 	OuterSet public outerSet;
 
-	function getValidators() constant returns (address[] _validators);
+	function getValidators() constant returns (address[]);
 	function finalizeChange();
 }
