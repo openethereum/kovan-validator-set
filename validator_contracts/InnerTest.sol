@@ -10,7 +10,7 @@ contract InnerTest is InnerSet {
 	}
 
 	address[] dummy;
-	function getValidators() constant returns (address[] _validators) {
+	function getValidators() constant returns (address[]) {
 		return dummy;
 	}
 	function finalizeChange() {
