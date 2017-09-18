@@ -43,7 +43,7 @@ contract OwnedSet is Owned, ValidatorSet {
 	AddressList.Data validators;
 	AddressList.Data pending;
 	// Was the last validator change finalized. Implies validators == pending
-	bool finalized;
+	bool public finalized;
 
 	function OwnedSet(address[] _initial) {
 		pending = AddressList.Data(_initial); // TODO: start empty
