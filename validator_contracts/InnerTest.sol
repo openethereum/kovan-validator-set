@@ -10,12 +10,15 @@ contract InnerTest is InnerSet {
 	}
 
 	address[] dummy;
+
 	function getValidators() constant returns (address[]) {
 		return dummy;
 	}
+
 	function finalizeChange() {
 		ChangeFinalized(dummy);
 	}
+
 	function changeValidators() {
 		outerSet.initiateChange(0, dummy);
 	}
