@@ -40,15 +40,8 @@ contract OuterSet is Owned, ValidatorSet {
 
 	function getValidators() constant returns (address[] _v) {
 		assembly {
-			_v := mload(0x40)   //Find empty storage location using "free memory pointer"
-			// TODO: invalid when oog
-			let ret := delegatecall(      //This is the critical change (Pop the top stack value)
-													5000, //5k gas
-													innerSet_slot, //To addr
-													SIGNATURE_slot,    // No input
-													SIGNATURE_offset, // No input length
-													_v,    //Store output over input (saves space)
-													returndatasize) //Outputs are 32 bytes long
+			_v := mload(0x40)
+			let ret := delegatecall(2300, innerSet_slot, SIGNATURE_slot, SIGNATURE_offset, _v, returndatasize)
 			// If throw then throw.
 			jumpi(0x02, iszero(ret))
 			returndatacopy(_v, _v, returndatasize)
