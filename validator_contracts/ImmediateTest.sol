@@ -9,32 +9,32 @@ contract ImmediateTest is ImmediateSet {
 	mapping(address => uint) indices;
 	address public disliked;
 
-	function TestList() {
+	function TestList() public {
 		for (uint i = 0; i < validators.length; i++) {
 			indices[validators[i]] = i;
 		}
 	}
 
 	// Called on every block to update node validator list.
-	function getValidators() constant returns (address[]) {
+	function getValidators() public constant returns (address[]) {
 		return validators;
 	}
 
 	// Expand the list of validators.
-	function addValidator(address _validator) {
+	function addValidator(address _validator) public {
 		validators.push(_validator);
 		indices[_validator] = validators.length - 1;
 	}
 
 	// Remove a validator from the list.
-	function reportMalicious(address _validator, uint _blockNumber, bytes _proof) {
+	function reportMalicious(address _validator, uint _blockNumber, bytes _proof) public {
 		validators[indices[_validator]] = validators[validators.length-1];
 		delete indices[_validator];
 		delete validators[validators.length-1];
 		validators.length--;
 	}
 
-	function reportBenign(address _validator, uint _blockNumber) {
+	function reportBenign(address _validator, uint _blockNumber) public {
 		disliked = _validator;
 	}
 }
