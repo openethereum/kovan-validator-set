@@ -9,12 +9,12 @@ contract OuterSet is Owned, ValidatorSet {
 	bytes4 SIGNATURE = 0xb7ab4db5;
 
 	modifier only_system_and_not_finalized() {
-		require(msg.sender != SYSTEM_ADDRESS || finalized);
+		require(msg.sender == SYSTEM_ADDRESS && !finalized);
 		_;
 	}
 
-	modifier when_finalized() {
-		require(!finalized);
+	modifier only_inner_and_finalized() {
+		require(msg.sender == address(innerSet) && finalized);
 		_;
 	}
 
@@ -22,23 +22,23 @@ contract OuterSet is Owned, ValidatorSet {
 	// Was the last validator change finalized.
 	bool public finalized;
 
-	function setInner(address _inner) only_owner {
+	function setInner(address _inner) public only_owner {
 		innerSet = InnerSet(_inner);
 	}
 
 	// For innerSet.
-	function initiateChange(bytes32 _parent_hash, address[] _new_set) when_finalized {
+	function initiateChange(bytes32 _parent_hash, address[] _new_set) public only_inner_and_finalized {
 		finalized = false;
 		InitiateChange(_parent_hash, _new_set);
 	}
 
 	// For sealer.
-	function finalizeChange() only_system_and_not_finalized {
+	function finalizeChange() public only_system_and_not_finalized {
 		finalized = true;
 		innerSet.finalizeChange();
 	}
 
-	function getValidators() constant returns (address[]) {
+	function getValidators() public constant returns (address[]) {
 		address addr = innerSet;
 		bytes4 sig = SIGNATURE;
 		assembly {
@@ -54,6 +54,6 @@ contract OuterSet is Owned, ValidatorSet {
 contract InnerSet {
 	OuterSet public outerSet;
 
-	function getValidators() constant returns (address[]);
-	function finalizeChange();
+	function getValidators() public constant returns (address[]);
+	function finalizeChange() public;
 }

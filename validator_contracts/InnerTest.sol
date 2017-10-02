@@ -5,21 +5,21 @@ import "./RelaySet.sol";
 contract InnerTest is InnerSet {
 	event ChangeFinalized(address[] current_set);
 
-	function InnerTest(address _outer) {
+	function InnerTest(address _outer) public {
 		outerSet = OuterSet(_outer);
 	}
 
 	address[] dummy;
 
-	function getValidators() constant returns (address[]) {
+	function getValidators() public constant returns (address[]) {
 		return dummy;
 	}
 
-	function finalizeChange() {
+	function finalizeChange() public {
 		ChangeFinalized(dummy);
 	}
 
-	function changeValidators() {
+	function changeValidators() public {
 		outerSet.initiateChange(0, dummy);
 	}
 }

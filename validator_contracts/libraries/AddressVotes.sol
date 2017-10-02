@@ -9,17 +9,17 @@ library AddressVotes {
 	}
 
 	// Total number of votes cast.
-	function count(Data storage self) constant returns (uint) {
+	function count(Data storage self) public constant returns (uint) {
 		return self.count;
 	}
 
 	// Did the voter already vote.
-	function contains(Data storage self, address voter) returns (bool) {
+	function contains(Data storage self, address voter) public constant returns (bool) {
 		return self.inserted[voter];
 	}
 
 	// Voter casts a vote.
-	function insert(Data storage self, address voter) returns (bool) {
+	function insert(Data storage self, address voter) public returns (bool) {
 		if (self.inserted[voter]) { return false; }
 		self.count++;
 		self.inserted[voter] = true;
@@ -27,7 +27,7 @@ library AddressVotes {
 	}
 
 	// Retract a vote by a voter.
-	function remove(Data storage self, address voter) returns (bool) {
+	function remove(Data storage self, address voter) public returns (bool) {
 		if (!self.inserted[voter]) { return false; }
 		self.count--;
 		self.inserted[voter] = false;
