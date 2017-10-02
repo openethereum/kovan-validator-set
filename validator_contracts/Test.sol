@@ -13,26 +13,26 @@ contract Test is ValidatorSet {
 	// Validator that has been recently reported as benign misbehaving.
 	address public disliked;
 
-	function TestList() {
+	function TestList() public {
 		for (uint i = 0; i < validators.length; i++) {
 			indices[validators[i]] = i;
 		}
 	}
 
 	// Called on every block to update node validator list.
-	function getValidators() constant returns (address[]) {
+	function getValidators() public constant returns (address[]) {
 		return validators;
 	}
 
 	// Expand the list of validators.
-	function addValidator(address _validator) {
+	function addValidator(address _validator) public {
 		pending.push(_validator);
 		indices[_validator] = validators.length - 1;
 		InitiateChange(block.blockhash(block.number - 1), pending);
 	}
 
 	// Remove a validator from the list.
-	function reportMalicious(address _validator) {
+	function reportMalicious(address _validator) public {
 		pending[indices[_validator]] = pending[pending.length-1];
 		delete indices[_validator];
 		delete pending[pending.length-1];
@@ -40,11 +40,11 @@ contract Test is ValidatorSet {
 		InitiateChange(block.blockhash(block.number - 1), pending);
 	}
 	
-	function reportBenign(address _validator) {
+	function reportBenign(address _validator) public {
 		disliked = _validator;
 	}
 
-	function finalizeChange() {
+	function finalizeChange() public {
 		validators = pending;
 	}
 }
