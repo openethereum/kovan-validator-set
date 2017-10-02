@@ -117,7 +117,7 @@ contract MajoritySet is ValidatorSet {
 
 	// Remove support for a validator.
 	function removeSupport(address sender, address validator) private {
-			if (!AddressVotes.remove(validatorsStatus[validator].support, sender)) { throw; }
+			require(AddressVotes.remove(validatorsStatus[validator].support, sender));
 			Support(sender, validator, false);
 			// Remove validator from the list if there is not enough support.
 			removeValidator(validator);
@@ -261,7 +261,7 @@ contract MajoritySet is ValidatorSet {
 	}
 
 	modifier only_validator() {
-			if (!validatorsStatus[msg.sender].isValidator) { throw; }
+			require(validatorsStatus[msg.sender].isValidator);
 			_;
 	}
 

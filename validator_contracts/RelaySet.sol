@@ -6,7 +6,7 @@ import "./ValidatorSet.sol";
 contract OuterSet is Owned, ValidatorSet {
 	// System address, used by the block sealer.
 	address constant SYSTEM_ADDRESS = 0xfffffffffffffffffffffffffffffffffffffffe;
-	bytes4 SIGNATURE = bytes4(sha3("getValidators()"));
+	bytes4 SIGNATURE = 0xb7ab4db5;
 
 	modifier only_system_and_not_finalized() {
 		require(msg.sender != SYSTEM_ADDRESS || finalized);
@@ -38,13 +38,15 @@ contract OuterSet is Owned, ValidatorSet {
 		innerSet.finalizeChange();
 	}
 
-	function getValidators() constant returns (address[] _v) {
+	function getValidators() constant returns (address[]) {
+		address addr = innerSet;
+		bytes4 sig = SIGNATURE;
 		assembly {
-			_v := mload(0x40)
-			let ret := delegatecall(2300, innerSet_slot, SIGNATURE_slot, SIGNATURE_offset, _v, returndatasize)
-			// If throw then throw.
-			jumpi(0x02, iszero(ret))
-			returndatacopy(_v, _v, returndatasize)
+			mstore(0, sig)
+			let ret := call(0xfffffffface8, addr, 0, 0, 4, 0, 0)
+			jumpi(0x02,iszero(ret))
+			returndatacopy(0, 0, returndatasize)
+			return(0, returndatasize)
 		}
 	}
 }
