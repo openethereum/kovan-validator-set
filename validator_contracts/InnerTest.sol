@@ -1,6 +1,6 @@
 pragma solidity ^0.4.15;
 
-import "./RelaySet.sol";
+import "./interfaces/RelaySet.sol";
 
 contract InnerTest is InnerSet {
 	event ChangeFinalized(address[] current_set);
