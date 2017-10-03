@@ -32,8 +32,6 @@ contract MajoritySet is ValidatorSet {
 		AddressVotes.Data benignMisbehaviour;
 	}
 
-	// System address, used by the block sealer.
-	address constant SYSTEM_ADDRESS = 0xfffffffffffffffffffffffffffffffffffffffe;
 	// Support can not be added once this number of validators is reached.
 	uint public constant MAX_VALIDATORS = 30;
 	// Time after which the validators will report a validator as malicious.
@@ -47,8 +45,6 @@ contract MajoritySet is ValidatorSet {
 	address[] public validatorsList;
 	// Pending list of validator addresses.
 	address[] pendingList;
-	// Was the last validator change finalized.
-	bool finalized;
 	// Tracker of status for each address.
 	mapping(address => ValidatorStatus) validatorsStatus;
 
@@ -84,14 +80,13 @@ contract MajoritySet is ValidatorSet {
 	}
 
 	// Log desire to change the current list.
-	function initiateChange() private when_finalized {
-		finalized = false;
+	function initiateChange() private {
+		outerSet.initiateChange(block.blockhash(block.number - 1), getPending());
 		InitiateChange(block.blockhash(block.number - 1), pendingList);
 	}
 
-	function finalizeChange() public only_system_and_not_finalized {
+	function finalizeChange() public only_outer {
 		validatorsList = pendingList;
-		finalized = true;
 		ChangeFinalized(validatorsList);
 	}
 
@@ -284,16 +279,6 @@ contract MajoritySet is ValidatorSet {
 
 	modifier is_recent(uint blockNumber) {
 		require(block.number <= blockNumber + RECENT_BLOCKS);
-		_;
-	}
-
-	modifier only_system_and_not_finalized() {
-		require(msg.sender == SYSTEM_ADDRESS && !finalized);
-		_;
-	}
-
-	modifier when_finalized() {
-		require(finalized);
 		_;
 	}
 }

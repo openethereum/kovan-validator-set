@@ -1,28 +1,18 @@
 pragma solidity ^0.4.15;
 
 import "./interfaces/Owned.sol";
-import "./interfaces/ValidatorSet.sol";
+import "./interfaces/RelaySet.sol";
 
 // Owner can add or remove validators.
 
-contract OwnedSet is Owned, ValidatorSet {
+contract OwnedInnerSet is Owned, InnerSet {
 	// EVENTS
 	event Report(address indexed reporter, address indexed reported, bool indexed malicious);
+	event InitiateChange(bytes32 indexed _parent_hash, address[] _new_set);
 	event ChangeFinalized(address[] current_set);
 
 	// System address, used by the block sealer.
-	address constant SYSTEM_ADDRESS = 0xfffffffffffffffffffffffffffffffffffffffe;
 	uint public recentBlocks = 20;
-
-	modifier only_system_and_not_finalized() {
-		require(msg.sender != SYSTEM_ADDRESS || finalized);
-		_;
-	}
-
-	modifier when_finalized() {
-		require(!finalized);
-		_;
-	}
 
 	modifier is_validator(address _someone) {
 		if (pendingStatus[_someone].isIn) { _; }
@@ -52,10 +42,8 @@ contract OwnedSet is Owned, ValidatorSet {
 	address[] validators;
 	address[] pending;
 	mapping(address => AddressStatus) pendingStatus;
-	// Was the last validator change finalized. Implies validators == pending
-	bool public finalized;
 
-	function OwnedSet(address[] _initial) public {
+	function OwnedInnerSet(address[] _initial) public {
 		pending = _initial;
 		for (uint i = 0; i < _initial.length - 1; i++) {
 			pendingStatus[_initial[i]].isIn = true;
@@ -74,15 +62,14 @@ contract OwnedSet is Owned, ValidatorSet {
 	}
 
 	// Log desire to change the current list.
-	function initiateChange() private when_finalized {
-		finalized = false;
+	function initiateChange() private {
+		outerSet.initiateChange(block.blockhash(block.number - 1), getPending());
 		InitiateChange(block.blockhash(block.number - 1), getPending());
 	}
 
-	function finalizeChange() public only_system_and_not_finalized {
+	function finalizeChange() public only_outer {
 		validators = pending;
-		finalized = true;
-		ChangeFinalized(getValidators());
+		ChangeFinalized(validators);
 	}
 
 	// OWNER FUNCTIONS
