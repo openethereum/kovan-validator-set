@@ -40,7 +40,7 @@ contract InnerMajoritySet is InnerSet {
 	// Ignore misbehaviour older than this number of blocks.
 	uint public constant RECENT_BLOCKS = 20;
 
-// STATE
+	// STATE
 
 	// Current list of addresses entitled to participate in the consensus.
 	address[] public validatorsList;
