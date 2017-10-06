@@ -1,17 +1,9 @@
 pragma solidity ^0.4.15;
 
-import "./MajoritySet.sol";
+import "./InnerMajoritySet.sol";
 import "./libraries/AddressVotes.sol";
 
-// Existing validators can give support to addresses.
-// Support can not be added once MAX_VALIDATORS are present.
-// Once given, support can be removed.
-// Addresses supported by more than half of the existing validators are the validators.
-// Malicious behaviour causes support removal.
-// Benign misbehaviour causes supprt removal if its called again after MAX_INACTIVITY.
-// Benign misbehaviour can be absolved before being called the second time.
-
-contract Kovan is MajoritySet {
+contract Kovan is InnerMajoritySet {
 	// Used to lower the constructor cost.
 	bool private initialized;
 
@@ -21,7 +13,7 @@ contract Kovan is MajoritySet {
 	}
 
 	// Each validator is initially supported by all others.
-	function Kovan() {
+	function Kovan() public {
 		pendingList = [
 			// Etherscan
 			0x00D6Cc1BA9cf89BD2e58009741f4F7325BAdc0ED,
@@ -51,7 +43,7 @@ contract Kovan is MajoritySet {
 	}
 
 	// Has to be called once before any other methods are called.
-	function initializeValidators() uninitialized {
+	function initializeValidators() public uninitialized {
 		for (uint j = 0; j < pendingList.length; j++) {
 			address validator = pendingList[j];
 			validatorsStatus[validator] = ValidatorStatus({
@@ -64,6 +56,5 @@ contract Kovan is MajoritySet {
 		}
 		initialized = true;
 		validatorsList = pendingList;
-		finalized = false;
 	}
 }
