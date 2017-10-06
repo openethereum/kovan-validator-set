@@ -1,6 +1,6 @@
 pragma solidity ^0.4.15;
 
-import "./interfaces/ValidatorSet.sol";
+import "./interfaces/RelaySet.sol";
 import "./libraries/AddressVotes.sol";
 
 // Existing validators can give support to addresses.
@@ -11,10 +11,11 @@ import "./libraries/AddressVotes.sol";
 // Benign misbehaviour causes supprt removal if its called again after MAX_INACTIVITY.
 // Benign misbehaviour can be absolved before being called the second time.
 
-contract MajoritySet is ValidatorSet {
+contract InnerMajoritySet is InnerSet {
 	// EVENTS
 	event Report(address indexed reporter, address indexed reported, bool indexed malicious);
 	event Support(address indexed supporter, address indexed supported, bool indexed added);
+	event InitiateChange(bytes32 indexed _parent_hash, address[] _new_set);
 	event ChangeFinalized(address[] current_set);
 
 	struct ValidatorStatus {
@@ -52,7 +53,7 @@ contract MajoritySet is ValidatorSet {
 	AddressVotes.Data initialSupport;
 
 	// Each validator is initially supported by all others.
-	function MajoritySet() public {
+	function InnerMajoritySet() public {
 		pendingList.push(0xf5777f8133aae2734396ab1d43ca54ad11bfb737);
 
 		initialSupport.count = pendingList.length;
@@ -81,7 +82,7 @@ contract MajoritySet is ValidatorSet {
 
 	// Log desire to change the current list.
 	function initiateChange() private {
-		outerSet.initiateChange(block.blockhash(block.number - 1), getPending());
+		outerSet.initiateChange(block.blockhash(block.number - 1), pendingList);
 		InitiateChange(block.blockhash(block.number - 1), pendingList);
 	}
 
