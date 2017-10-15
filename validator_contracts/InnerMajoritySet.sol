@@ -45,7 +45,7 @@ contract InnerMajoritySet is InnerSet {
 	// Current list of addresses entitled to participate in the consensus.
 	address[] public validatorsList;
 	// Pending list of validator addresses.
-	address[] pendingList;
+	address[] pendingList = [0xf5777f8133aae2734396ab1d43ca54ad11bfb737];
 	// Tracker of status for each address.
 	mapping(address => ValidatorStatus) validatorsStatus;
 
@@ -54,8 +54,6 @@ contract InnerMajoritySet is InnerSet {
 
 	// Each validator is initially supported by all others.
 	function InnerMajoritySet() public {
-		pendingList.push(0xf5777f8133aae2734396ab1d43ca54ad11bfb737);
-
 		initialSupport.count = pendingList.length;
 		for (uint i = 0; i < pendingList.length; i++) {
 			address supporter = pendingList[i];
