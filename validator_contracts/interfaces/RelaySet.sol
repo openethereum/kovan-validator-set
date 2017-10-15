@@ -6,6 +6,7 @@ import "./ValidatorSet.sol";
 contract OuterSet is Owned, ValidatorSet {
 	// System address, used by the block sealer.
 	address constant SYSTEM_ADDRESS = 0xfffffffffffffffffffffffffffffffffffffffe;
+	// `getValidators()` method signature.
 	bytes4 SIGNATURE = 0xb7ab4db5;
 
 	modifier only_system_and_not_finalized() {
@@ -13,8 +14,8 @@ contract OuterSet is Owned, ValidatorSet {
 		_;
 	}
 
-	modifier only_inner() {
-		require(msg.sender == address(innerSet));
+	modifier only_inner_and_finalized() {
+		require(msg.sender == address(innerSet) && finalized);
 		_;
 	}
 
@@ -27,7 +28,7 @@ contract OuterSet is Owned, ValidatorSet {
 	}
 
 	// For innerSet.
-	function initiateChange(bytes32 _parent_hash, address[] _new_set) public only_inner {
+	function initiateChange(bytes32 _parent_hash, address[] _new_set) public only_inner_and_finalized {
 		finalized = false;
 		InitiateChange(_parent_hash, _new_set);
 	}
