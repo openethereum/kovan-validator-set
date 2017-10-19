@@ -209,7 +209,7 @@ contract InnerMajoritySet is InnerSet {
 		// Remove all support given by the removed validator.
 		address[] storage toRemove = validatorsStatus[validator].supported;
 		for (uint i = 0; i < toRemove.length; i++) {
-				removeSupport(validator, toRemove[i]);
+			removeSupport(validator, toRemove[i]);
 		}
 		delete validatorsStatus[validator].supported;
 		initiateChange();
