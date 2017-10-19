@@ -5,7 +5,7 @@ import "./interfaces/RelaySet.sol";
 
 // Owner can add or remove validators.
 
-contract OwnedInnerSet is Owned, InnerSet {
+contract InnerOwnedSet is Owned, InnerSet {
 	// EVENTS
 	event Report(address indexed reporter, address indexed reported, bool indexed malicious);
 	event InitiateChange(bytes32 indexed _parent_hash, address[] _new_set);
@@ -43,7 +43,7 @@ contract OwnedInnerSet is Owned, InnerSet {
 	address[] pending;
 	mapping(address => AddressStatus) pendingStatus;
 
-	function OwnedInnerSet(address[] _initial) public {
+	function InnerOwnedSet(address[] _initial) public {
 		pending = _initial;
 		for (uint i = 0; i < _initial.length - 1; i++) {
 			pendingStatus[_initial[i]].isIn = true;
