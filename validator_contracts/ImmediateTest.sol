@@ -9,7 +9,7 @@ contract ImmediateTest is ImmediateSet {
 	mapping(address => uint) indices;
 	address public disliked;
 
-	function TestList() public {
+	function ImmediateTest() public {
 		for (uint i = 0; i < validators.length; i++) {
 			indices[validators[i]] = i;
 		}
