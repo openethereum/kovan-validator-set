@@ -27,7 +27,7 @@ contract ImmediateTest is ImmediateSet {
 	}
 
 	// Remove a validator from the list.
-	function reportMalicious(address _validator, uint _blockNumber, bytes _proof) public {
+	function reportMalicious(address _validator, uint, bytes) public {
 		validators[indices[_validator]] = validators[validators.length-1];
 		delete indices[_validator];
 		delete validators[validators.length-1];
