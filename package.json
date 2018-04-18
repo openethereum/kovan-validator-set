@@ -1,0 +1,31 @@
+{
+  "name": "kovan-validator-set",
+  "version": "0.1.0",
+  "description": "",
+  "author": "Parity Technologies <admin@parity.io>",
+  "homepage": "https://github.com/parity-contracts/kovan-validator-set",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/parity-contracts/kovan-validator-set.git"
+  },
+  "bugs": {
+    "url": "https://github.com/parity-contracts/kovan-validator-set/issues"
+  },
+  "scripts": {
+    "compile": "npx truffle compile",
+    "migrate": "npx truffle migrate",
+    "test": "npx truffle test --network test",
+    "coverage": "npx solidity-coverage",
+    "lint": "npx solium -d contracts/",
+    "ganache": "npx ganache-cli --port 7545",
+    "parity": "parity --chain dev --jsonrpc-port 7545 --jsonrpc-apis all"
+  },
+  "devDependencies": {
+    "coveralls": "^3.0.0",
+    "ganache-cli": "^6.1.0",
+    "solidity-coverage": "^0.4.15",
+    "solium": "^1.1.6",
+    "truffle": "^4.1.5"
+  }
+}
