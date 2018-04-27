@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.21;
+
 
 contract ValidatorSet {
 	/// Issue this log event to signal a desired change in validator set.
@@ -23,9 +24,9 @@ contract ValidatorSet {
 	/// If a signal is issued while another is being finalized it may never
 	/// take effect.
 	///
-	/// _parent_hash here should be the parent block hash, or the
+	/// _parentHash here should be the parent block hash, or the
 	/// signal will not be recognized.
-	event InitiateChange(bytes32 indexed _parent_hash, address[] _new_set);
+	event InitiateChange(bytes32 indexed _parentHash, address[] _newSet);
 
 	/// Get current validator set (last enacted or initial if no changes ever made)
 	function getValidators() public constant returns (address[]);
@@ -42,13 +43,4 @@ contract ValidatorSet {
 
 	function reportBenign(address validator, uint256 blockNumber) public;
 	function reportMalicious(address validator, uint256 blockNumber, bytes proof) public;
-}
-
-contract SafeValidatorSet is ValidatorSet {
-	function reportBenign(address validator, uint256 blockNumber) public {}
-	function reportMalicious(address validator, uint256 blockNumber, bytes proof) public {}
-}
-
-contract ImmediateSet is ValidatorSet {
-	function finalizeChange() public {}
 }
