@@ -12,47 +12,46 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.21;
 
 import "./interfaces/Owned.sol";
 import "./interfaces/ValidatorSet.sol";
 
-// Owner can add or remove validators.
 
+// Owner can add or remove validators.
 contract OwnedSet is Owned, ValidatorSet {
 	// EVENTS
 	event Report(address indexed reporter, address indexed reported, bool indexed malicious);
-	event ChangeFinalized(address[] current_set);
+	event ChangeFinalized(address[] currentSet);
 
-	// System address, used by the block sealer.
-	address constant SYSTEM_ADDRESS = 0xfffffffffffffffffffffffffffffffffffffffe;
-	uint public recentBlocks = 20;
-
-	modifier only_system_and_not_finalized() {
+	// MODIFIERS
+	modifier onlySystemAndNotFinalized() {
 		require(msg.sender != SYSTEM_ADDRESS || finalized);
 		_;
 	}
 
-	modifier when_finalized() {
+	modifier whenFinalized() {
 		require(!finalized);
 		_;
 	}
 
-	modifier is_validator(address _someone) {
-		if (pendingStatus[_someone].isIn) { _; }
+	modifier isValidator(address _someone) {
+		if (pendingStatus[_someone].isIn) {
+			_;
+		}
 	}
 
-	modifier is_pending(address _someone) {
+	modifier isPending(address _someone) {
 		require(pendingStatus[_someone].isIn);
 		_;
 	}
 
-	modifier is_not_pending(address _someone) {
+	modifier isNotPending(address _someone) {
 		require(!pendingStatus[_someone].isIn);
 		_;
 	}
 
-	modifier is_recent(uint _blockNumber) {
+	modifier isRecent(uint _blockNumber) {
 		require(block.number <= _blockNumber + recentBlocks);
 		_;
 	}
@@ -61,6 +60,10 @@ contract OwnedSet is Owned, ValidatorSet {
 		bool isIn;
 		uint index;
 	}
+
+	// System address, used by the block sealer.
+	address constant SYSTEM_ADDRESS = 0xfffffffffffffffffffffffffffffffffffffffe;
+	uint public recentBlocks = 20;
 
 	// Current list of addresses entitled to participate in the consensus.
 	address[] validators;
@@ -87,22 +90,16 @@ contract OwnedSet is Owned, ValidatorSet {
 		return pending;
 	}
 
-	// Log desire to change the current list.
-	function initiateChange() private when_finalized {
-		finalized = false;
-		InitiateChange(block.blockhash(block.number - 1), getPending());
-	}
-
-	function finalizeChange() public only_system_and_not_finalized {
+	function finalizeChange() public onlySystemAndNotFinalized {
 		validators = pending;
 		finalized = true;
-		ChangeFinalized(getValidators());
+		emit ChangeFinalized(getValidators());
 	}
 
 	// OWNER FUNCTIONS
 
 	// Add a validator.
-	function addValidator(address _validator) public only_owner is_not_pending(_validator) {
+	function addValidator(address _validator) public onlyOwner isNotPending(_validator) {
 		pendingStatus[_validator].isIn = true;
 		pendingStatus[_validator].index = pending.length;
 		pending.push(_validator);
@@ -110,7 +107,7 @@ contract OwnedSet is Owned, ValidatorSet {
 	}
 
 	// Remove a validator.
-	function removeValidator(address _validator) public only_owner is_pending(_validator) {
+	function removeValidator(address _validator) public onlyOwner isPending(_validator) {
 		pending[pendingStatus[_validator].index] = pending[pending.length - 1];
 		delete pending[pending.length - 1];
 		pending.length--;
@@ -120,19 +117,26 @@ contract OwnedSet is Owned, ValidatorSet {
 		initiateChange();
 	}
 
-	function setRecentBlocks(uint _recentBlocks) public only_owner {
+	function setRecentBlocks(uint _recentBlocks) public onlyOwner {
 		recentBlocks = _recentBlocks;
 	}
 
 	// MISBEHAVIOUR HANDLING
 
 	// Called when a validator should be removed.
-	function reportMalicious(address _validator, uint _blockNumber, bytes _proof) public only_owner is_recent(_blockNumber) {
-		Report(msg.sender, _validator, true);
+	function reportMalicious(address _validator, uint _blockNumber, bytes _proof) public onlyOwner isRecent(_blockNumber) {
+		emit Report(msg.sender, _validator, true);
 	}
 
 	// Report that a validator has misbehaved in a benign way.
-	function reportBenign(address _validator, uint _blockNumber) public only_owner is_validator(_validator) is_recent(_blockNumber) {
-		Report(msg.sender, _validator, false);
+	function reportBenign(address _validator, uint _blockNumber) public onlyOwner isValidator(_validator) isRecent(_blockNumber) {
+		emit Report(msg.sender, _validator, false);
+	}
+
+	// Log desire to change the current list.
+	function initiateChange() private whenFinalized {
+		finalized = false;
+		// solium-disable-next-line security/no-block-members
+		InitiateChange(block.blockhash(block.number - 1), getPending());
 	}
 }
