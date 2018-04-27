@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.21;
 
 
 contract ValidatorSet {
@@ -43,15 +43,4 @@ contract ValidatorSet {
 
 	function reportBenign(address validator, uint256 blockNumber) public;
 	function reportMalicious(address validator, uint256 blockNumber, bytes proof) public;
-}
-
-
-contract SafeValidatorSet is ValidatorSet {
-	function reportBenign(address validator, uint256 blockNumber) public {}
-	function reportMalicious(address validator, uint256 blockNumber, bytes proof) public {}
-}
-
-
-contract ImmediateSet is ValidatorSet {
-	function finalizeChange() public {}
 }

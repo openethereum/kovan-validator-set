@@ -62,7 +62,7 @@ contract OwnedSet is Owned, ValidatorSet {
 	}
 
 	// System address, used by the block sealer.
-	address constant SYSTEM_ADDRESS = 0xfffffffffffffffffffffffffffffffffffffffe;
+	address constant SYSTEM_ADDRESS = 0xffffFFFfFFffffffffffffffFfFFFfffFFFfFFfE;
 	uint public recentBlocks = 20;
 
 	// Current list of addresses entitled to participate in the consensus.
@@ -124,7 +124,7 @@ contract OwnedSet is Owned, ValidatorSet {
 	// MISBEHAVIOUR HANDLING
 
 	// Called when a validator should be removed.
-	function reportMalicious(address _validator, uint _blockNumber, bytes _proof) public onlyOwner isRecent(_blockNumber) {
+	function reportMalicious(address _validator, uint _blockNumber, bytes /* _proof */) public onlyOwner isRecent(_blockNumber) {
 		emit Report(msg.sender, _validator, true);
 	}
 
@@ -137,6 +137,6 @@ contract OwnedSet is Owned, ValidatorSet {
 	function initiateChange() private whenFinalized {
 		finalized = false;
 		// solium-disable-next-line security/no-block-members
-		InitiateChange(block.blockhash(block.number - 1), getPending());
+		emit InitiateChange(blockhash(block.number - 1), getPending());
 	}
 }
