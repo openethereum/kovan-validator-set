@@ -26,19 +26,13 @@ contract OwnedSet is Owned, ValidatorSet {
 
 	// MODIFIERS
 	modifier onlySystemAndNotFinalized() {
-		require(msg.sender != SYSTEM_ADDRESS || finalized);
+		require((msg.sender == SYSTEM_ADDRESS) && !finalized);
 		_;
 	}
 
 	modifier whenFinalized() {
-		require(!finalized);
+		require(finalized);
 		_;
-	}
-
-	modifier isValidator(address _someone) {
-		if (pendingStatus[_someone].isIn) {
-			_;
-		}
 	}
 
 	modifier isPending(address _someone) {
@@ -129,7 +123,7 @@ contract OwnedSet is Owned, ValidatorSet {
 	}
 
 	// Report that a validator has misbehaved in a benign way.
-	function reportBenign(address _validator, uint _blockNumber) public onlyOwner isValidator(_validator) isRecent(_blockNumber) {
+	function reportBenign(address _validator, uint _blockNumber) public onlyOwner isRecent(_blockNumber) {
 		emit Report(msg.sender, _validator, false);
 	}
 
