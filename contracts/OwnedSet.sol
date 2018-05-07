@@ -46,19 +46,13 @@ contract OwnedSet is Owned, ValidatorSet {
 
 	// MODIFIERS
 	modifier onlySystemAndNotFinalized() {
-		require(msg.sender != SYSTEM_ADDRESS || finalized);
+		require(msg.sender == SYSTEM_ADDRESS && !finalized);
 		_;
 	}
 
 	modifier whenFinalized() {
-		require(!finalized);
+		require(finalized);
 		_;
-	}
-
-	modifier isValidator(address _someone) {
-		if (pendingStatus[_someone].isIn) {
-			_;
-		}
 	}
 
 	modifier isPending(address _someone) {
@@ -148,7 +142,7 @@ contract OwnedSet is Owned, ValidatorSet {
 	function reportBenign(address _validator, uint _blockNumber)
 		external
 		onlyOwner
-		isValidator(_validator)
+		isPending(_validator)
 		isRecent(_blockNumber)
 	{
 		emit Report(msg.sender, _validator, false);
