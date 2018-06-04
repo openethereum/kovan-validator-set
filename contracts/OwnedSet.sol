@@ -86,9 +86,7 @@ contract OwnedSet is Owned, ValidatorSet {
 		external
 		onlySystemAndNotFinalized
 	{
-		validators = pending;
-		finalized = true;
-		emit ChangeFinalized(getValidators());
+		finalizeChangeInternal();
 	}
 
 	// OWNER FUNCTIONS
@@ -166,6 +164,19 @@ contract OwnedSet is Owned, ValidatorSet {
 		returns (address[])
 	{
 		return pending;
+	}
+
+	// INTERNAL
+
+	// Called when an initiated change reaches finality and is activated.
+	// This method is defined with no modifiers so it can be reused by
+	// contracts inheriting it (e.g. for mocking in tests).
+	function finalizeChangeInternal()
+		internal
+	{
+		validators = pending;
+		finalized = true;
+		emit ChangeFinalized(getValidators());
 	}
 
 	// PRIVATE
