@@ -213,27 +213,171 @@ contract("TestOwnedSet", accounts => {
       () => set.removeValidator(accounts[8], { from: OWNER }),
       "revert",
     );
+  });
 
-    it("should only allow one change per epoch", async () => {
-      const set = await ownedSet();
+  it("should only allow one change per epoch", async () => {
+    const set = await ownedSet();
 
-      await set.addValidator(accounts[2], { from: OWNER });
+    await set.addValidator(accounts[3], { from: OWNER });
 
-      // disallowed because previous change hasn't been finalized yet
-      await assertThrowsAsync(
-        () => set.removeValidator(accounts[2], { from: OWNER }),
-        "revert",
-      );
+    // disallowed because previous change hasn't been finalized yet
+    await assertThrowsAsync(
+      () => set.removeValidator(accounts[3], { from: OWNER }),
+      "revert",
+    );
 
-      await set.finalizeChange({ from: SYSTEM });
+    await set.finalizeChange({ from: SYSTEM });
 
-      // after finalizing it should work successfully
-      await set.removeValidator(accounts[2], { from: OWNER });
+    // after finalizing it should work successfully
+    await set.removeValidator(accounts[3], { from: OWNER });
 
-      assert.deepEqual(
-        await set.getPending(),
-        INITIAL_VALIDATORS,
-      );
-    });
+    assert.deepEqual(
+      await set.getPending(),
+      INITIAL_VALIDATORS,
+    );
+  });
+
+  it("should allow the owner to report misbehaviour", async () => {
+    const set = await ownedSet();
+    const watcher = set.Report();
+
+    // only the owner can report misbehaviour
+    await assertThrowsAsync(
+      () => set.reportMalicious(
+        accounts[2],
+        web3.eth.blockNumber - 1,
+        [],
+        { from: accounts[1] },
+      ),
+      "revert",
+    );
+
+    await assertThrowsAsync(
+      () => set.reportBenign(
+        accounts[2],
+        web3.eth.blockNumber - 1,
+        { from: accounts[1] },
+      ),
+      "revert",
+    );
+
+    // successfully report malicious misbehaviour
+    await set.reportMalicious(
+      accounts[2],
+      web3.eth.blockNumber - 1,
+      [],
+      { from: OWNER },
+    );
+
+    // it should emit a `Report` event
+    let events = await watcher.get();
+
+    assert.equal(events.length, 1);
+    assert.equal(events[0].args.reporter, OWNER);
+    assert.equal(events[0].args.reported, accounts[2]);
+    assert(events[0].args.malicious);
+
+    // successfully report benign misbehaviour
+    await set.reportBenign(
+      accounts[2],
+      web3.eth.blockNumber - 1,
+      { from: OWNER },
+    );
+
+    // it should emit a `Report` event
+    events = await watcher.get();
+
+    assert.equal(events.length, 1);
+    assert.equal(events[0].args.reporter, OWNER);
+    assert.equal(events[0].args.reported, accounts[2]);
+    assert(!events[0].args.malicious);
+  });
+
+  it("should allow the owner to set required recency of misbehavior reports", async () => {
+    const set = await ownedSet();
+
+    // only the owner can call `setRecentBlocks`
+    await assertThrowsAsync(
+      () => set.setRecentBlocks(1, { from: accounts[1] }),
+      "revert",
+    );
+
+    await set.setRecentBlocks(1, { from: OWNER });
+
+    const recentBlocks = await set.recentBlocks();
+    assert.equal(recentBlocks, 1);
+  });
+
+  it("should ignore old misbehaviour reports", async () => {
+    const set = await ownedSet();
+
+    await assertThrowsAsync(
+      () => set.reportBenign(
+        accounts[0],
+        web3.eth.blockNumber - 1,
+        { from: OWNER },
+      ),
+      "revert",
+    );
+  });
+
+  it("should ignore reports from addresses that are not validators", async () => {
+    const set = await ownedSet();
+
+    await set.setRecentBlocks(20, { from: OWNER });
+
+    // exists in `pendingStatus` with `isIn` set to false
+    await assertThrowsAsync(
+      () => set.reportBenign(
+        accounts[3],
+        web3.eth.blockNumber,
+        { from: OWNER },
+      ),
+      "revert",
+    );
+
+    // non-existent in `pendingStatus`
+    await assertThrowsAsync(
+      () => set.reportBenign(
+        accounts[8],
+        web3.eth.blockNumber,
+        { from: OWNER },
+      ),
+      "revert",
+    );
+  });
+
+  it("should allow the owner of the contract to transfer ownership of the contract", async () => {
+    const set = await ownedSet();
+    const watcher = set.NewOwner();
+
+    // only the owner of the contract can transfer ownership
+    await assertThrowsAsync(
+      () => set.setOwner(accounts[1], { from: accounts[1] }),
+      "revert",
+    );
+
+    let owner = await set.owner();
+    assert.equal(owner, accounts[0]);
+
+    // we successfully transfer ownership of the contract
+    await set.setOwner(accounts[1]);
+
+    // the `owner` should point to the new owner
+    owner = await set.owner();
+    assert.equal(owner, accounts[1]);
+
+    // it should emit a `NewOwner` event
+    const events = await watcher.get();
+
+    assert.equal(events.length, 1);
+    assert.equal(events[0].args.old, accounts[0]);
+    assert.equal(events[0].args.current, accounts[1]);
+
+    // the old owner can no longer set a new owner
+    await assertThrowsAsync(
+      () => set.setOwner(accounts[0], { from: accounts[0] }),
+      "revert",
+    );
   });
 });
