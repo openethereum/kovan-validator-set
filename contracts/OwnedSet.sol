@@ -109,12 +109,18 @@ contract OwnedSet is Owned, ValidatorSet {
 		onlyOwner
 		isPending(_validator)
 	{
-		pending[pendingStatus[_validator].index] = pending[pending.length - 1];
+		// Remove validator from pending by moving the
+		// last element to its slot
+		uint index = pendingStatus[_validator].index;
+		pending[index] = pending[pending.length - 1];
+		pendingStatus[pending[index]].index = index;
 		delete pending[pending.length - 1];
 		pending.length--;
-		// Reset address status.
+
+		// Reset address status
 		delete pendingStatus[_validator].index;
 		pendingStatus[_validator].isIn = false;
+
 		initiateChange();
 	}
 
