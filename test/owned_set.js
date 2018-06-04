@@ -13,6 +13,7 @@ contract("TestOwnedSet", accounts => {
     assert.fail("Expected fn to throw");
   };
 
+  const OWNER = accounts[0];
   const SYSTEM = accounts[9];
   const INITIAL_VALIDATORS = [accounts[0], accounts[1], accounts[2]];
 
@@ -51,5 +52,188 @@ contract("TestOwnedSet", accounts => {
       assert(isIn);
       assert.equal(idx, index);
     }
+  });
+
+  it("should allow the system to finalize changes", async () => {
+    const set = await ownedSet();
+    const watcher = set.ChangeFinalized();
+
+    // only the system address can finalize changes
+    await assertThrowsAsync(
+      () => set.finalizeChange(),
+      "revert",
+    );
+
+    // we successfully finalize the change
+    await set.finalizeChange({ from: SYSTEM });
+
+    // the initial validator set should be finalized
+    const finalized = await set.finalized();
+    assert(finalized);
+
+    // a `ChangeFinalized` event should be emitted
+    const events = await watcher.get();
+
+    assert.equal(events.length, 1);
+    assert.deepEqual(events[0].args.currentSet, INITIAL_VALIDATORS);
+
+    // abort if there's no change to finalize
+    await assertThrowsAsync(
+      () => set.finalizeChange({ from: SYSTEM }),
+      "revert",
+    );
+  });
+
+  it("should allow the owner to add new validators", async () => {
+    const set = await ownedSet();
+    const watcher = set.InitiateChange();
+
+    // only the owner can add new validators
+    await assertThrowsAsync(
+      () => set.addValidator(accounts[3], { from: accounts[1] }),
+      "revert",
+    );
+
+    // we successfully add a new validator
+    await set.addValidator(accounts[3], { from: OWNER });
+
+    // a `InitiateChange` event should be emitted
+    const events = await watcher.get();
+
+    const newSet = INITIAL_VALIDATORS.concat(accounts[3]);
+
+    const parent = await web3.eth.getBlock(web3.eth.blockNumber - 1);
+    assert.equal(events.length, 1);
+    assert.equal(events[0].args._parentHash, parent.hash);
+    assert.deepEqual(events[0].args._newSet, newSet);
+
+    // this change is not finalized yet
+    const finalized = await set.finalized();
+    assert(!finalized);
+
+    // the pending set should be updated
+    assert.deepEqual(
+      await set.getPending(),
+      newSet,
+    );
+
+    // the validator set should stay the same
+    assert.deepEqual(
+      await set.getValidators(),
+      INITIAL_VALIDATORS,
+    );
+
+    // `pendingStatus` should be updated
+    const [isIn, index] = await set.getPendingStatus(accounts[3]);
+    assert(isIn);
+    assert.equal(index, 3);
+
+    // we successfully finalize the change
+    await set.finalizeChange({ from: SYSTEM });
+
+    // the validator set should be updated
+    assert.deepEqual(
+      await set.getValidators(),
+      newSet,
+    );
+  });
+
+  it("should abort when adding a duplicate validator", async () => {
+    const set = await ownedSet();
+    // we successfully add a new validator
+    await assertThrowsAsync(
+      () => set.addValidator(accounts[3], { from: OWNER }),
+      "revert",
+    );
+  });
+
+  it("should allow the owner to remove a validator", async () => {
+    const set = await ownedSet();
+    const watcher = set.InitiateChange();
+
+    // only the owner can remove validators
+    await assertThrowsAsync(
+      () => set.removeValidator(accounts[3], { from: accounts[1] }),
+      "revert",
+    );
+
+    // we successfully remove a validator
+    await set.removeValidator(accounts[3], { from: OWNER });
+
+    // a `InitiateChange` event should be emitted
+    const events = await watcher.get();
+
+    const parent = await web3.eth.getBlock(web3.eth.blockNumber - 1);
+    assert.equal(events.length, 1);
+    assert.equal(events[0].args._parentHash, parent.hash);
+    assert.deepEqual(events[0].args._newSet, INITIAL_VALIDATORS);
+
+    // this change is not finalized yet
+    const finalized = await set.finalized();
+    assert(!finalized);
+
+    // the pending set should be updated
+    assert.deepEqual(
+      await set.getPending(),
+      INITIAL_VALIDATORS,
+    );
+
+    // the validator set should stay the same
+    assert.deepEqual(
+      await set.getValidators(),
+      INITIAL_VALIDATORS.concat(accounts[3]),
+    );
+
+    // `pendingStatus` should be updated
+    const [isIn, index] = await set.getPendingStatus(accounts[3]);
+    assert(!isIn);
+    assert.equal(index, 0);
+
+    // we successfully finalize the change
+    await set.finalizeChange({ from: SYSTEM });
+
+    // the validator set should be updated
+    assert.deepEqual(
+      await set.getValidators(),
+      INITIAL_VALIDATORS,
+    );
+  });
+
+  it("should abort when trying to remove non-existent validator", async () => {
+    const set = await ownedSet();
+
+    // exists in `pendingStatus` with `isIn` set to false
+    await assertThrowsAsync(
+      () => set.removeValidator(accounts[3], { from: OWNER }),
+      "revert",
+    );
+
+    // non-existent in `pendingStatus`
+    await assertThrowsAsync(
+      () => set.removeValidator(accounts[8], { from: OWNER }),
+      "revert",
+    );
+
+    it("should only allow one change per epoch", async () => {
+      const set = await ownedSet();
+
+      await set.addValidator(accounts[2], { from: OWNER });
+
+      // disallowed because previous change hasn't been finalized yet
+      await assertThrowsAsync(
+        () => set.removeValidator(accounts[2], { from: OWNER }),
+        "revert",
+      );
+
+      await set.finalizeChange({ from: SYSTEM });
+
+      // after finalizing it should work successfully
+      await set.removeValidator(accounts[2], { from: OWNER });
+
+      assert.deepEqual(
+        await set.getPending(),
+        INITIAL_VALIDATORS,
+      );
+    });
   });
 });
