@@ -14,21 +14,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.22;
 
 
 contract Owned {
+	event NewOwner(address indexed old, address indexed current);
+
+	address public owner = msg.sender;
+
 	modifier onlyOwner {
 		require(msg.sender == owner);
 		_;
 	}
 
-	event NewOwner(address indexed old, address indexed current);
-
-	function setOwner(address _new) public onlyOwner {
+	function setOwner(address _new)
+		external
+		onlyOwner
+	{
 		emit NewOwner(owner, _new);
 		owner = _new;
 	}
-
-	address public owner = msg.sender;
 }
