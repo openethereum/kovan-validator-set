@@ -30,18 +30,6 @@ contract TestOwnedSet is OwnedSet {
 		systemAddress = _systemAddress;
 	}
 
-	// expose `status` to use for assertions in tests
-	function getStatus(address _validator)
-		public
-		view
-		returns (bool isIn, uint index)
-	{
-		AddressStatus storage addressStatus = status[_validator];
-
-		isIn = addressStatus.isIn;
-		index = addressStatus.index;
-	}
-
 	// re-declare these methods to use the mocked system address
 	modifier onlySystem() {
 		require(msg.sender == systemAddress);
@@ -53,5 +41,17 @@ contract TestOwnedSet is OwnedSet {
 		onlySystem
 	{
 		finalizeChangeInternal();
+	}
+
+	// expose `status` to use for assertions in tests
+	function getStatus(address _validator)
+		public
+		view
+		returns (bool isIn, uint index)
+	{
+		AddressStatus storage addressStatus = status[_validator];
+
+		isIn = addressStatus.isIn;
+		index = addressStatus.index;
 	}
 }
