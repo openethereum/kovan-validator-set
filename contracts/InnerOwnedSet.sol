@@ -29,6 +29,13 @@ contract InnerOwnedSet is Owned, InnerSet, BaseOwnedSet {
 		outerSet = OuterSet(_outerSet);
 	}
 
+	function setOuter(address _outer)
+		external
+		onlyOwner
+	{
+		outerSet = OuterSet(_outer);
+	}
+
 	function finalizeChange()
 		external
 		onlyOuter
