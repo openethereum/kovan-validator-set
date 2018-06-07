@@ -139,7 +139,8 @@ contract OwnedSet is Owned, ValidatorSet {
 	// Report that a validator has misbehaved maliciously.
 	function reportMalicious(address _validator, uint _blockNumber, bytes _proof)
 		external
-		onlyOwner
+		isValidator(msg.sender)
+		isValidator(_validator)
 		isRecent(_blockNumber)
 	{
 		emit Report(msg.sender, _validator, true);
@@ -148,7 +149,7 @@ contract OwnedSet is Owned, ValidatorSet {
 	// Report that a validator has misbehaved in a benign way.
 	function reportBenign(address _validator, uint _blockNumber)
 		external
-		onlyOwner
+		isValidator(msg.sender)
 		isValidator(_validator)
 		isRecent(_blockNumber)
 	{
