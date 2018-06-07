@@ -222,7 +222,7 @@ contract("TestOwnedSet", accounts => {
 
     // disallowed because previous change hasn't been finalized yet
     await assertThrowsAsync(
-      () => set.removeValidator(accounts[3], { from: OWNER }),
+      () => set.removeValidator(accounts[2], { from: OWNER }),
       "revert",
     );
 
@@ -237,59 +237,59 @@ contract("TestOwnedSet", accounts => {
     );
   });
 
-  it("should allow the owner to report misbehaviour", async () => {
+  it("should allow current validators to report misbehaviour", async () => {
     const set = await ownedSet();
     const watcher = set.Report();
 
-    // only the owner can report misbehaviour
+    // only current validators can report misbehaviour
     await assertThrowsAsync(
       () => set.reportMalicious(
-        accounts[2],
+        INITIAL_VALIDATORS[0],
         web3.eth.blockNumber - 1,
         [],
-        { from: accounts[1] },
+        { from: accounts[8] },
       ),
       "revert",
     );
 
     await assertThrowsAsync(
       () => set.reportBenign(
-        accounts[2],
+        INITIAL_VALIDATORS[0],
         web3.eth.blockNumber - 1,
-        { from: accounts[1] },
+        { from: accounts[8] },
       ),
       "revert",
     );
 
     // successfully report malicious misbehaviour
     await set.reportMalicious(
-      accounts[2],
+      INITIAL_VALIDATORS[0],
       web3.eth.blockNumber - 1,
       [],
-      { from: OWNER },
+      { from: INITIAL_VALIDATORS[1] },
     );
 
     // it should emit a `Report` event
     let events = await watcher.get();
 
     assert.equal(events.length, 1);
-    assert.equal(events[0].args.reporter, OWNER);
-    assert.equal(events[0].args.reported, accounts[2]);
+    assert.equal(events[0].args.reporter, INITIAL_VALIDATORS[1]);
+    assert.equal(events[0].args.reported, INITIAL_VALIDATORS[0]);
     assert(events[0].args.malicious);
 
     // successfully report benign misbehaviour
     await set.reportBenign(
-      accounts[2],
+      INITIAL_VALIDATORS[0],
       web3.eth.blockNumber - 1,
-      { from: OWNER },
+      { from: INITIAL_VALIDATORS[1] },
     );
 
     // it should emit a `Report` event
     events = await watcher.get();
 
     assert.equal(events.length, 1);
-    assert.equal(events[0].args.reporter, OWNER);
-    assert.equal(events[0].args.reported, accounts[2]);
+    assert.equal(events[0].args.reporter, INITIAL_VALIDATORS[1]);
+    assert.equal(events[0].args.reported, INITIAL_VALIDATORS[0]);
     assert(!events[0].args.malicious);
   });
 
