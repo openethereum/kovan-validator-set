@@ -39,7 +39,7 @@ contract OwnedSet is Owned, ValidatorSet {
 	// Current list of addresses entitled to participate in the consensus.
 	address[] validators;
 	address[] pending;
-	mapping(address => AddressStatus) pendingStatus;
+	mapping(address => AddressStatus) status;
 
 	// Was the last validator change finalized. Implies validators == pending
 	bool public finalized;
@@ -56,12 +56,12 @@ contract OwnedSet is Owned, ValidatorSet {
 	}
 
 	modifier isPending(address _someone) {
-		require(pendingStatus[_someone].isIn);
+		require(status[_someone].isIn);
 		_;
 	}
 
 	modifier isNotPending(address _someone) {
-		require(!pendingStatus[_someone].isIn);
+		require(!status[_someone].isIn);
 		_;
 	}
 
@@ -75,8 +75,8 @@ contract OwnedSet is Owned, ValidatorSet {
 	{
 		pending = _initial;
 		for (uint i = 0; i < _initial.length; i++) {
-			pendingStatus[_initial[i]].isIn = true;
-			pendingStatus[_initial[i]].index = i;
+			status[_initial[i]].isIn = true;
+			status[_initial[i]].index = i;
 		}
 		validators = pending;
 	}
@@ -97,8 +97,8 @@ contract OwnedSet is Owned, ValidatorSet {
 		onlyOwner
 		isNotPending(_validator)
 	{
-		pendingStatus[_validator].isIn = true;
-		pendingStatus[_validator].index = pending.length;
+		status[_validator].isIn = true;
+		status[_validator].index = pending.length;
 		pending.push(_validator);
 		initiateChange();
 	}
@@ -111,15 +111,15 @@ contract OwnedSet is Owned, ValidatorSet {
 	{
 		// Remove validator from pending by moving the
 		// last element to its slot
-		uint index = pendingStatus[_validator].index;
+		uint index = status[_validator].index;
 		pending[index] = pending[pending.length - 1];
-		pendingStatus[pending[index]].index = index;
+		status[pending[index]].index = index;
 		delete pending[pending.length - 1];
 		pending.length--;
 
 		// Reset address status
-		delete pendingStatus[_validator].index;
-		pendingStatus[_validator].isIn = false;
+		delete status[_validator].index;
+		status[_validator].isIn = false;
 
 		initiateChange();
 	}

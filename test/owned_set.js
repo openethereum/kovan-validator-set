@@ -48,7 +48,7 @@ contract("TestOwnedSet", accounts => {
 
     // every validator should be added to the `pendingStatus` map
     for (let [index, acc] of expected.entries()) {
-      let [isIn, idx] = await set.getPendingStatus(acc);
+      let [isIn, idx] = await set.getStatus(acc);
       assert(isIn);
       assert.equal(idx, index);
     }
@@ -124,7 +124,7 @@ contract("TestOwnedSet", accounts => {
     );
 
     // `pendingStatus` should be updated
-    const [isIn, index] = await set.getPendingStatus(accounts[3]);
+    const [isIn, index] = await set.getStatus(accounts[3]);
     assert(isIn);
     assert.equal(index, 3);
 
@@ -185,7 +185,7 @@ contract("TestOwnedSet", accounts => {
     );
 
     // `pendingStatus` should be updated
-    const [isIn, index] = await set.getPendingStatus(accounts[3]);
+    const [isIn, index] = await set.getStatus(accounts[3]);
     assert(!isIn);
     assert.equal(index, 0);
 

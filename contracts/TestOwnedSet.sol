@@ -30,16 +30,16 @@ contract TestOwnedSet is OwnedSet {
 		systemAddress = _systemAddress;
 	}
 
-	// expose `pendingStatus` to use for assertions in tests
-	function getPendingStatus(address _validator)
+	// expose `status` to use for assertions in tests
+	function getStatus(address _validator)
 		public
 		view
 		returns (bool isIn, uint index)
 	{
-		AddressStatus storage status = pendingStatus[_validator];
+		AddressStatus storage addressStatus = status[_validator];
 
-		isIn = status.isIn;
-		index = status.index;
+		isIn = addressStatus.isIn;
+		index = addressStatus.index;
 	}
 
 	// re-declare these methods to use the mocked system address
