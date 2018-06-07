@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// An owned validator set contract where the owner can add or remove validators.
+
 pragma solidity ^0.4.22;
 
 import "./Owned.sol";
 import "./ValidatorSet.sol";
 
 
-// Owner can add or remove validators.
 contract BaseOwnedSet is Owned, ValidatorSet {
 	// TYPES
 	struct AddressStatus {
