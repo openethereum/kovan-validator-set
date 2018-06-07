@@ -19,7 +19,7 @@ import "./ValidatorSet.sol";
 
 
 // Owner can add or remove validators.
-contract OwnedSet is Owned, ValidatorSet {
+contract BaseOwnedSet is Owned, ValidatorSet {
 	// TYPES
 	struct AddressStatus {
 		bool isIn;
@@ -28,12 +28,8 @@ contract OwnedSet is Owned, ValidatorSet {
 
 	// EVENTS
 	event Report(address indexed reporter, address indexed reported, bool indexed malicious);
-	event ChangeFinalized(address[] currentSet);
 
 	// STATE
-
-	// System address, used by the block sealer.
-	address constant SYSTEM_ADDRESS = 0xffffFFFfFFffffffffffffffFfFFFfffFFFfFFfE;
 	uint public recentBlocks = 20;
 
 	// Current list of addresses entitled to participate in the consensus.
@@ -41,24 +37,7 @@ contract OwnedSet is Owned, ValidatorSet {
 	address[] pending;
 	mapping(address => AddressStatus) status;
 
-	// Was the last validator change finalized. Implies validators == pending
-	bool public finalized;
-
 	// MODIFIERS
-	modifier onlySystem() {
-		require(msg.sender == SYSTEM_ADDRESS);
-		_;
-	}
-
-	modifier whenFinalized() {
-		require(finalized);
-		_;
-	}
-
-	modifier whenNotFinalized() {
-		require(!finalized);
-		_;
-	}
 
 	/// Asserts whether a given address is currently a validator. A validator
 	/// that is pending to be added is not considered a validator, only when
@@ -97,14 +76,6 @@ contract OwnedSet is Owned, ValidatorSet {
 			status[_initial[i]].index = i;
 		}
 		validators = pending;
-	}
-
-	// Called when an initiated change reaches finality and is activated.
-	function finalizeChange()
-		external
-		onlySystem
-	{
-		finalizeChangeInternal();
 	}
 
 	// OWNER FUNCTIONS
@@ -188,6 +159,54 @@ contract OwnedSet is Owned, ValidatorSet {
 		returns (address[])
 	{
 		return pending;
+	}
+
+	// PRIVATE
+
+	function initiateChange()
+		private;
+}
+
+
+contract OwnedSet is BaseOwnedSet {
+	// EVENTS
+	event ChangeFinalized(address[] currentSet);
+
+	// STATE
+
+	// System address, used by the block sealer.
+	address constant SYSTEM_ADDRESS = 0xffffFFFfFFffffffffffffffFfFFFfffFFFfFFfE;
+
+	// Was the last validator change finalized. Implies validators == pending
+	bool public finalized;
+
+	// MODIFIERS
+	modifier onlySystem() {
+		require(msg.sender == SYSTEM_ADDRESS);
+		_;
+	}
+
+	modifier whenFinalized() {
+		require(finalized);
+		_;
+	}
+
+	modifier whenNotFinalized() {
+		require(!finalized);
+		_;
+	}
+
+	constructor(address[] _initial) BaseOwnedSet(_initial)
+		public
+	{
+	}
+
+	// Called when an initiated change reaches finality and is activated.
+	function finalizeChange()
+		external
+		onlySystem
+	{
+		finalizeChangeInternal();
 	}
 
 	// INTERNAL
