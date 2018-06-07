@@ -231,7 +231,6 @@ contract OwnedSet is BaseOwnedSet {
 		whenFinalized
 	{
 		finalized = false;
-		// solium-disable-next-line security/no-block-members
 		emit InitiateChange(blockhash(block.number - 1), getPending());
 	}
 }
