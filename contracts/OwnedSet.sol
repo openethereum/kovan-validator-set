@@ -69,7 +69,7 @@ contract OwnedSet is Owned, ValidatorSet {
 	}
 
 	modifier isRecent(uint _blockNumber) {
-		require(block.number <= _blockNumber + recentBlocks);
+		require(block.number <= _blockNumber + recentBlocks && _blockNumber < block.number);
 		_;
 	}
 
