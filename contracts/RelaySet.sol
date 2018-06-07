@@ -63,9 +63,7 @@ contract OuterSet is Owned, ValidatorSet {
 		external
 		onlySystemAndNotFinalized
 	{
-		finalized = true;
-		innerSet.finalizeChange();
-		emit ChangeFinalized(getValidators());
+		finalizeChangeInternal();
 	}
 
 	function reportBenign(address validator, uint256 blockNumber)
@@ -93,6 +91,16 @@ contract OuterSet is Owned, ValidatorSet {
 		returns (address[])
 	{
 		return innerSet.getValidators();
+	}
+
+	// This method is defined with no modifiers so it can be reused by
+	// contracts inheriting it (e.g. for mocking in tests).
+	function finalizeChangeInternal()
+		internal
+	{
+		finalized = true;
+		innerSet.finalizeChange();
+		emit ChangeFinalized(getValidators());
 	}
 }
 
