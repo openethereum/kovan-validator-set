@@ -55,12 +55,15 @@ contract OwnedSet is Owned, ValidatorSet {
 		_;
 	}
 
-	modifier isPending(address _someone) {
-		require(status[_someone].isIn);
+	modifier isValidator(address _someone) {
+		bool isIn = status[_someone].isIn;
+		uint index = status[_someone].index;
+
+		require(isIn && index < validators.length && validators[index] == _someone);
 		_;
 	}
 
-	modifier isNotPending(address _someone) {
+	modifier isNotValidator(address _someone) {
 		require(!status[_someone].isIn);
 		_;
 	}
@@ -95,7 +98,7 @@ contract OwnedSet is Owned, ValidatorSet {
 	function addValidator(address _validator)
 		external
 		onlyOwner
-		isNotPending(_validator)
+		isNotValidator(_validator)
 	{
 		status[_validator].isIn = true;
 		status[_validator].index = pending.length;
@@ -107,7 +110,7 @@ contract OwnedSet is Owned, ValidatorSet {
 	function removeValidator(address _validator)
 		external
 		onlyOwner
-		isPending(_validator)
+		isValidator(_validator)
 	{
 		// Remove validator from pending by moving the
 		// last element to its slot
@@ -146,7 +149,7 @@ contract OwnedSet is Owned, ValidatorSet {
 	function reportBenign(address _validator, uint _blockNumber)
 		external
 		onlyOwner
-		isPending(_validator)
+		isValidator(_validator)
 		isRecent(_blockNumber)
 	{
 		emit Report(msg.sender, _validator, false);
