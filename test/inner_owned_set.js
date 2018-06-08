@@ -368,6 +368,51 @@ contract("TestInnerOwnedSet", accounts => {
     );
   });
 
+  it("should allows the owner of the inner contract to set the outer contract", async () => {
+    const inner = await innerOwnedSet();
+    const outerSetAddress = (await outerSet()).address;
+
+    // only the owner of the contract can set the outer contract
+    await assertThrowsAsync(
+      () => inner.setOuter(accounts[1], { from: accounts[1] }),
+      "revert",
+    );
+
+    let outer = await inner.outerSet();
+    assert.equal(outer, outerSetAddress);
+
+    // we successfully set the outer set of the contract
+    await inner.setOuter(0, { from: OWNER });
+
+    // the `outerSet` should point to the new address
+    outer = await inner.outerSet();
+    assert.equal(outer, 0);
+
+    // set the original outer set address
+    await inner.setOuter(outerSetAddress, { from: OWNER });
+  });
+
+  it("should allow only the outer contract to call `finalizeChange`", async () => {
+    const inner = await innerOwnedSet();
+    const outerSetAddress = (await outerSet()).address;
+
+    // only the outer set can finalize changes
+    await assertThrowsAsync(
+      () => inner.finalizeChange({ from: accounts[1] }),
+      "revert",
+    );
+
+    // set outer contract to address of accounts[0]
+    await inner.setOuter(accounts[0], { from: OWNER });
+
+    // inner contract doesn't check for finality in `finalizeChange` since it's
+    // only meant be called from outer contract (which tracks finality)
+    await inner.finalizeChange({ from: accounts[0] });
+
+    // set the original outer set address
+    await inner.setOuter(outerSetAddress, { from: OWNER });
+  });
+
   it("should allow the owner of the contract to transfer ownership of the contract", async () => {
     const set = await innerOwnedSet();
     const watcher = set.NewOwner();
