@@ -200,14 +200,14 @@ contract OwnedSet is BaseOwnedSet {
 	// STATE
 
 	// System address, used by the block sealer.
-	address constant SYSTEM_ADDRESS = 0xffffFFFfFFffffffffffffffFfFFFfffFFFfFFfE;
+	address public systemAddress;
 
 	// Was the last validator change finalized. Implies validators == pending
 	bool public finalized;
 
 	// MODIFIERS
 	modifier onlySystem() {
-		require(msg.sender == SYSTEM_ADDRESS);
+		require(msg.sender == systemAddress);
 		_;
 	}
 
@@ -224,6 +224,7 @@ contract OwnedSet is BaseOwnedSet {
 	constructor(address[] _initial) BaseOwnedSet(_initial)
 		public
 	{
+		systemAddress = 0xffffFFFfFFffffffffffffffFfFFFfffFFFfFFfE;
 	}
 
 	// Called when an initiated change reaches finality and is activated.

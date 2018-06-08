@@ -32,7 +32,7 @@ contract OuterSet is Owned, ValidatorSet {
 	// STATE
 
 	// System address, used by the block sealer.
-	address constant SYSTEM_ADDRESS = 0xffffFFFfFFffffffffffffffFfFFFfffFFFfFFfE;
+	address public systemAddress;
 	// Address of the inner validator set contract
 	InnerSet public innerSet;
 	// Was the last validator change finalized.
@@ -40,7 +40,7 @@ contract OuterSet is Owned, ValidatorSet {
 
 	// MODIFIERS
 	modifier onlySystem() {
-		require(msg.sender == SYSTEM_ADDRESS);
+		require(msg.sender == systemAddress);
 		_;
 	}
 
@@ -52,6 +52,12 @@ contract OuterSet is Owned, ValidatorSet {
 	modifier whenNotFinalized() {
 		require(!finalized);
 		_;
+	}
+
+	constructor()
+		public
+	{
+		systemAddress = 0xffffFFFfFFffffffffffffffFfFFFfffFFFfFFfE;
 	}
 
 	// For innerSet
