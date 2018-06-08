@@ -60,6 +60,16 @@ contract OwnedSet is Owned, ValidatorSet {
 		_;
 	}
 
+	/// Asserts whether a given address is currently a validator. A validator
+	/// that is pending to be added is not considered a validator, only when
+	/// that change is finalized will this method return true. A validator that
+	/// is pending to be removed is immediately not considered a validator
+	/// (before the change is finalized).
+	///
+	/// For the purposes of this contract one of the consequences is that you
+	/// can't report on a validator that is currently active but pending to be
+	/// removed. This is a compromise for simplicity since the reporting
+	/// functions only emit events which can be tracked off-chain.
 	modifier isValidator(address _someone) {
 		bool isIn = status[_someone].isIn;
 		uint index = status[_someone].index;
