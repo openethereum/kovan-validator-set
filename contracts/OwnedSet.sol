@@ -121,8 +121,7 @@ contract OwnedSet is Owned, ValidatorSet {
 		pending.length--;
 
 		// Reset address status
-		delete status[_validator].index;
-		status[_validator].isIn = false;
+		delete status[_validator];
 
 		initiateChange();
 	}
