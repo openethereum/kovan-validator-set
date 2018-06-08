@@ -45,7 +45,12 @@ contract InnerOwnedSet is Owned, InnerSet, BaseOwnedSet {
 		external
 		onlyOuter
 	{
-		reportMaliciousInternal(_reporter, _validator, _blockNumber, _proof);
+		reportMaliciousInternal(
+			_reporter,
+			_validator,
+			_blockNumber,
+			_proof
+		);
 	}
 
 	function setOuter(address _outer)

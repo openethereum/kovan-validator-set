@@ -131,7 +131,12 @@ contract BaseOwnedSet is Owned, ValidatorSet {
 	function reportMalicious(address _validator, uint256 _blockNumber, bytes _proof)
 		external
 	{
-		reportMaliciousInternal(msg.sender, _validator, _blockNumber, _proof);
+		reportMaliciousInternal(
+			msg.sender,
+			_validator,
+			_blockNumber,
+			_proof
+		);
 	}
 
 	// GETTERS
