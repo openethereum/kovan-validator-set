@@ -43,14 +43,14 @@ contract TestOwnedSet is OwnedSet {
 	}
 
 	// re-declare these methods to use the mocked system address
-	modifier onlySystemAndNotFinalized() {
-		require(msg.sender == systemAddress && !finalized);
+	modifier onlySystem() {
+		require(msg.sender == systemAddress);
 		_;
 	}
 
 	function finalizeChange()
 		external
-		onlySystemAndNotFinalized
+		onlySystem
 	{
 		finalizeChangeInternal();
 	}
