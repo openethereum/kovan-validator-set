@@ -39,13 +39,18 @@ contract OuterSet is Owned, ValidatorSet {
 	bool public finalized;
 
 	// MODIFIERS
-	modifier onlySystemAndNotFinalized() {
-		require(msg.sender == SYSTEM_ADDRESS && !finalized);
+	modifier onlySystem() {
+		require(msg.sender == SYSTEM_ADDRESS);
 		_;
 	}
 
 	modifier onlyInnerAndFinalized() {
 		require(msg.sender == address(innerSet) && finalized);
+		_;
+	}
+
+	modifier whenNotFinalized() {
+		require(!finalized);
 		_;
 	}
 
@@ -61,7 +66,7 @@ contract OuterSet is Owned, ValidatorSet {
 	// For sealer
 	function finalizeChange()
 		external
-		onlySystemAndNotFinalized
+		onlySystem
 	{
 		finalizeChangeInternal();
 	}
@@ -102,6 +107,7 @@ contract OuterSet is Owned, ValidatorSet {
 	// contracts inheriting it (e.g. for mocking in tests).
 	function finalizeChangeInternal()
 		internal
+		whenNotFinalized
 	{
 		finalized = true;
 		innerSet.finalizeChange();
