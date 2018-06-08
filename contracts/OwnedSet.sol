@@ -39,40 +39,52 @@ contract OwnedSet is Owned, ValidatorSet {
 	// Current list of addresses entitled to participate in the consensus.
 	address[] validators;
 	address[] pending;
-	mapping(address => AddressStatus) pendingStatus;
+	mapping(address => AddressStatus) status;
 
 	// Was the last validator change finalized. Implies validators == pending
 	bool public finalized;
 
 	// MODIFIERS
-	modifier onlySystemAndNotFinalized() {
-		require(msg.sender != SYSTEM_ADDRESS || finalized);
+	modifier onlySystem() {
+		require(msg.sender == SYSTEM_ADDRESS);
 		_;
 	}
 
 	modifier whenFinalized() {
+		require(finalized);
+		_;
+	}
+
+	modifier whenNotFinalized() {
 		require(!finalized);
 		_;
 	}
 
+	/// Asserts whether a given address is currently a validator. A validator
+	/// that is pending to be added is not considered a validator, only when
+	/// that change is finalized will this method return true. A validator that
+	/// is pending to be removed is immediately not considered a validator
+	/// (before the change is finalized).
+	///
+	/// For the purposes of this contract one of the consequences is that you
+	/// can't report on a validator that is currently active but pending to be
+	/// removed. This is a compromise for simplicity since the reporting
+	/// functions only emit events which can be tracked off-chain.
 	modifier isValidator(address _someone) {
-		if (pendingStatus[_someone].isIn) {
-			_;
-		}
-	}
+		bool isIn = status[_someone].isIn;
+		uint index = status[_someone].index;
 
-	modifier isPending(address _someone) {
-		require(pendingStatus[_someone].isIn);
+		require(isIn && index < validators.length && validators[index] == _someone);
 		_;
 	}
 
-	modifier isNotPending(address _someone) {
-		require(!pendingStatus[_someone].isIn);
+	modifier isNotValidator(address _someone) {
+		require(!status[_someone].isIn);
 		_;
 	}
 
 	modifier isRecent(uint _blockNumber) {
-		require(block.number <= _blockNumber + recentBlocks);
+		require(block.number <= _blockNumber + recentBlocks && _blockNumber < block.number);
 		_;
 	}
 
@@ -80,9 +92,9 @@ contract OwnedSet is Owned, ValidatorSet {
 		public
 	{
 		pending = _initial;
-		for (uint i = 0; i < _initial.length - 1; i++) {
-			pendingStatus[_initial[i]].isIn = true;
-			pendingStatus[_initial[i]].index = i;
+		for (uint i = 0; i < _initial.length; i++) {
+			status[_initial[i]].isIn = true;
+			status[_initial[i]].index = i;
 		}
 		validators = pending;
 	}
@@ -90,11 +102,9 @@ contract OwnedSet is Owned, ValidatorSet {
 	// Called when an initiated change reaches finality and is activated.
 	function finalizeChange()
 		external
-		onlySystemAndNotFinalized
+		onlySystem
 	{
-		validators = pending;
-		finalized = true;
-		emit ChangeFinalized(getValidators());
+		finalizeChangeInternal();
 	}
 
 	// OWNER FUNCTIONS
@@ -103,10 +113,10 @@ contract OwnedSet is Owned, ValidatorSet {
 	function addValidator(address _validator)
 		external
 		onlyOwner
-		isNotPending(_validator)
+		isNotValidator(_validator)
 	{
-		pendingStatus[_validator].isIn = true;
-		pendingStatus[_validator].index = pending.length;
+		status[_validator].isIn = true;
+		status[_validator].index = pending.length;
 		pending.push(_validator);
 		initiateChange();
 	}
@@ -115,14 +125,19 @@ contract OwnedSet is Owned, ValidatorSet {
 	function removeValidator(address _validator)
 		external
 		onlyOwner
-		isPending(_validator)
+		isValidator(_validator)
 	{
-		pending[pendingStatus[_validator].index] = pending[pending.length - 1];
+		// Remove validator from pending by moving the
+		// last element to its slot
+		uint index = status[_validator].index;
+		pending[index] = pending[pending.length - 1];
+		status[pending[index]].index = index;
 		delete pending[pending.length - 1];
 		pending.length--;
-		// Reset address status.
-		delete pendingStatus[_validator].index;
-		pendingStatus[_validator].isIn = false;
+
+		// Reset address status
+		delete status[_validator];
+
 		initiateChange();
 	}
 
@@ -138,7 +153,8 @@ contract OwnedSet is Owned, ValidatorSet {
 	// Report that a validator has misbehaved maliciously.
 	function reportMalicious(address _validator, uint _blockNumber, bytes _proof)
 		external
-		onlyOwner
+		isValidator(msg.sender)
+		isValidator(_validator)
 		isRecent(_blockNumber)
 	{
 		emit Report(msg.sender, _validator, true);
@@ -147,7 +163,7 @@ contract OwnedSet is Owned, ValidatorSet {
 	// Report that a validator has misbehaved in a benign way.
 	function reportBenign(address _validator, uint _blockNumber)
 		external
-		onlyOwner
+		isValidator(msg.sender)
 		isValidator(_validator)
 		isRecent(_blockNumber)
 	{
@@ -172,6 +188,20 @@ contract OwnedSet is Owned, ValidatorSet {
 		returns (address[])
 	{
 		return pending;
+	}
+
+	// INTERNAL
+
+	// Called when an initiated change reaches finality and is activated.
+	// This method is defined with no modifiers so it can be reused by
+	// contracts inheriting it (e.g. for mocking in tests).
+	function finalizeChangeInternal()
+		internal
+		whenNotFinalized
+	{
+		validators = pending;
+		finalized = true;
+		emit ChangeFinalized(getValidators());
 	}
 
 	// PRIVATE
