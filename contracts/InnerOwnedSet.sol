@@ -29,6 +29,25 @@ contract InnerOwnedSet is Owned, InnerSet, BaseOwnedSet {
 		outerSet = OuterSet(_outerSet);
 	}
 
+	function reportBenignOuter(address _reporter, address _validator, uint _blockNumber)
+		external
+		onlyOuter
+	{
+		reportBenignInternal(_reporter, _validator, _blockNumber);
+	}
+
+	function reportMaliciousOuter(
+		address _reporter,
+		address _validator,
+		uint _blockNumber,
+		bytes _proof
+	)
+		external
+		onlyOuter
+	{
+		reportMaliciousInternal(_reporter, _validator, _blockNumber, _proof);
+	}
+
 	function setOuter(address _outer)
 		external
 		onlyOwner
@@ -46,6 +65,6 @@ contract InnerOwnedSet is Owned, InnerSet, BaseOwnedSet {
 	function initiateChange()
 		private
 	{
-		outerSet.initiateChange(blockhash(block.number - 1), super.getPending());
+		outerSet.initiateChange(blockhash(block.number - 1), getPending());
 	}
 }

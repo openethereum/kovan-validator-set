@@ -66,20 +66,20 @@ contract OuterSet is Owned, ValidatorSet {
 		finalizeChangeInternal();
 	}
 
-	function reportBenign(address validator, uint256 blockNumber)
+	function reportBenign(address _validator, uint256 _blockNumber)
 		external
 	{
-		innerSet.reportBenign(validator, blockNumber);
+		innerSet.reportBenignOuter(msg.sender, _validator, _blockNumber);
 	}
 
-	function reportMalicious(address validator, uint256 blockNumber, bytes proof)
+	function reportMalicious(address _validator, uint256 _blockNumber, bytes _proof)
 		external
 	{
-		innerSet.reportMalicious(validator, blockNumber, proof);
+		innerSet.reportMaliciousOuter(msg.sender, _validator, _blockNumber, _proof);
 	}
 
 	function setInner(address _inner)
-		public
+		external
 		onlyOwner
 	{
 		innerSet = InnerSet(_inner);
@@ -112,4 +112,15 @@ contract InnerSet is ValidatorSet {
 		require(msg.sender == address(outerSet));
 		_;
 	}
+
+	function reportBenignOuter(address _reporter, address _validator, uint _blockNumber)
+		external;
+
+	function reportMaliciousOuter(
+		address _reporter,
+		address _validator,
+		uint _blockNumber,
+		bytes _proof
+	)
+		external;
 }

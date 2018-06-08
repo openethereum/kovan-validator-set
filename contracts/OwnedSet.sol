@@ -122,24 +122,16 @@ contract BaseOwnedSet is Owned, ValidatorSet {
 
 	// MISBEHAVIOUR HANDLING
 
-	// Report that a validator has misbehaved maliciously.
-	function reportMalicious(address _validator, uint _blockNumber, bytes _proof)
+	function reportBenign(address _validator, uint256 _blockNumber)
 		external
-		isValidator(msg.sender)
-		isValidator(_validator)
-		isRecent(_blockNumber)
 	{
-		emit Report(msg.sender, _validator, true);
+		reportBenignInternal(msg.sender, _validator, _blockNumber);
 	}
 
-	// Report that a validator has misbehaved in a benign way.
-	function reportBenign(address _validator, uint _blockNumber)
+	function reportMalicious(address _validator, uint256 _blockNumber, bytes _proof)
 		external
-		isValidator(msg.sender)
-		isValidator(_validator)
-		isRecent(_blockNumber)
 	{
-		emit Report(msg.sender, _validator, false);
+		reportMaliciousInternal(msg.sender, _validator, _blockNumber, _proof);
 	}
 
 	// GETTERS
@@ -160,6 +152,33 @@ contract BaseOwnedSet is Owned, ValidatorSet {
 		returns (address[])
 	{
 		return pending;
+	}
+
+	// INTERNAL
+
+	// Report that a validator has misbehaved in a benign way.
+	function reportBenignInternal(address _reporter, address _validator, uint _blockNumber)
+		internal
+		isValidator(_reporter)
+		isValidator(_validator)
+		isRecent(_blockNumber)
+	{
+		emit Report(_reporter, _validator, false);
+	}
+
+	// Report that a validator has misbehaved maliciously.
+	function reportMaliciousInternal(
+		address _reporter,
+		address _validator,
+		uint _blockNumber,
+		bytes _proof
+	)
+		internal
+		isValidator(_reporter)
+		isValidator(_validator)
+		isRecent(_blockNumber)
+	{
+		emit Report(_reporter, _validator, true);
 	}
 
 	// PRIVATE
