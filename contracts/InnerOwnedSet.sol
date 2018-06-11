@@ -36,14 +36,14 @@ contract InnerOwnedSet is BaseOwnedSet {
 		outerSet = OuterSet(_outerSet);
 	}
 
-	function reportBenignOuter(address _reporter, address _validator, uint _blockNumber)
+	function outerReportBenign(address _reporter, address _validator, uint _blockNumber)
 		external
 		onlyOuter
 	{
 		baseReportBenign(_reporter, _validator, _blockNumber);
 	}
 
-	function reportMaliciousOuter(
+	function outerReportMalicious(
 		address _reporter,
 		address _validator,
 		uint _blockNumber,

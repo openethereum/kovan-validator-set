@@ -70,13 +70,13 @@ contract OuterSet is Owned, ValidatorSet {
 	function reportBenign(address _validator, uint256 _blockNumber)
 		external
 	{
-		innerSet.reportBenignOuter(msg.sender, _validator, _blockNumber);
+		innerSet.outerReportBenign(msg.sender, _validator, _blockNumber);
 	}
 
 	function reportMalicious(address _validator, uint256 _blockNumber, bytes _proof)
 		external
 	{
-		innerSet.reportMaliciousOuter(
+		innerSet.outerReportMalicious(
 			msg.sender,
 			_validator,
 			_blockNumber,
