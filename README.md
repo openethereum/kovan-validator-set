@@ -16,12 +16,12 @@ This repo contains [`ValidatorSet`](https://wiki.parity.io/Validator-Set) contra
 that are owned by an address. The owner of the validator set can manage the set by adding or
 removing validators.
 
-It also includes a relay set contract (`OuterSet`) which relays calls to an inner validator set
-contract and allows upgrading the inner contract.
+It also includes a relay set contract (`RelaySet`) which relays calls to an inner validator set
+contract and allows upgrading the relayed contract.
 
 There are two concrete contracts available:
  - `OwnedSet` - for direct usage of an owned validator set contract
- - `InnerOwnedSet` - meant to be used with a relay validator set
+ - `RelayedOwnedSet` - meant to be used with a relay validator set
 
 ## Getting started
 

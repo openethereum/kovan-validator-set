@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// A validator set contract that relays calls to an inner validator set
-// contract, which allows upgrading the inner validator set contract. It
-// provides an `initiateChange` function that allows the inner contract to
+// A validator set contract that relays calls to a relayed validator set
+// contract, which allows upgrading the relayed validator set contract. It
+// provides an `initiateChange` function that allows the relayed contract to
 // trigger a change, since the engine will be listening for events emitted by
-// the outer contract. It keeps track of finality of pending changes in order to
-// validate `initiateChange` and `finalizeChange` requests.
+// the outer relay contract.
 
 pragma solidity ^0.4.22;
 

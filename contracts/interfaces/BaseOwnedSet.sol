@@ -13,6 +13,12 @@
 // limitations under the License.
 
 // An owned validator set contract where the owner can add or remove validators.
+// This is an abstract contract that provides the base logic for adding/removing
+// validators and provides base implementations for the `ValidatorSet`
+// interface. The base implementations of the misbehavior reporting functions
+// perform validation on the reported and reporter validators according to the
+// currently active validator set. The base implementation of `finalizeChange`
+// validates that there are existing unfinalized changes.
 
 pragma solidity ^0.4.22;
 

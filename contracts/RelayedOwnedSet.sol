@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// A `OwnedSet` validator contract that is meant to be used as the inner
-// contract of a `RelaySet`.
+// A `OwnedSet` validator contract that is meant to be relayed by a `RelaySet`
+// contract.
 
 pragma solidity ^0.4.22;
 
