@@ -22,7 +22,7 @@ import "./OwnedSet.sol";
 import "./RelaySet.sol";
 
 
-contract InnerOwnedSet is Owned, BaseOwnedSet {
+contract InnerOwnedSet is BaseOwnedSet {
 	OuterSet public outerSet;
 
 	modifier onlyOuter() {
@@ -40,7 +40,7 @@ contract InnerOwnedSet is Owned, BaseOwnedSet {
 		external
 		onlyOuter
 	{
-		reportBenignInternal(_reporter, _validator, _blockNumber);
+		baseReportBenign(_reporter, _validator, _blockNumber);
 	}
 
 	function reportMaliciousOuter(
@@ -52,7 +52,7 @@ contract InnerOwnedSet is Owned, BaseOwnedSet {
 		external
 		onlyOuter
 	{
-		reportMaliciousInternal(
+		baseReportMalicious(
 			_reporter,
 			_validator,
 			_blockNumber,
@@ -71,7 +71,7 @@ contract InnerOwnedSet is Owned, BaseOwnedSet {
 		external
 		onlyOuter
 	{
-		finalizeChangeInternal();
+		baseFinalizeChange();
 	}
 
 	function initiateChange()

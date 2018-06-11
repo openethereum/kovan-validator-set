@@ -161,7 +161,7 @@ contract BaseOwnedSet is Owned {
 	// INTERNAL
 
 	// Report that a validator has misbehaved in a benign way.
-	function reportBenignInternal(address _reporter, address _validator, uint _blockNumber)
+	function baseReportBenign(address _reporter, address _validator, uint _blockNumber)
 		internal
 		isValidator(_reporter)
 		isValidator(_validator)
@@ -171,7 +171,7 @@ contract BaseOwnedSet is Owned {
 	}
 
 	// Report that a validator has misbehaved maliciously.
-	function reportMaliciousInternal(
+	function baseReportMalicious(
 		address _reporter,
 		address _validator,
 		uint _blockNumber,
@@ -186,7 +186,7 @@ contract BaseOwnedSet is Owned {
 	}
 
 	// Called when an initiated change reaches finality and is activated.
-	function finalizeChangeInternal()
+	function baseFinalizeChange()
 		internal
 		whenNotFinalized
 	{
@@ -233,7 +233,7 @@ contract OwnedSet is ValidatorSet, BaseOwnedSet {
 		external
 		onlySystem
 	{
-		finalizeChangeInternal();
+		baseFinalizeChange();
 	}
 
 	// MISBEHAVIOUR HANDLING
@@ -241,13 +241,13 @@ contract OwnedSet is ValidatorSet, BaseOwnedSet {
 	function reportBenign(address _validator, uint256 _blockNumber)
 		external
 	{
-		reportBenignInternal(msg.sender, _validator, _blockNumber);
+		baseReportBenign(msg.sender, _validator, _blockNumber);
 	}
 
 	function reportMalicious(address _validator, uint256 _blockNumber, bytes _proof)
 		external
 	{
-		reportMaliciousInternal(
+		baseReportMalicious(
 			msg.sender,
 			_validator,
 			_blockNumber,
