@@ -22,35 +22,35 @@ import "./OwnedSet.sol";
 import "./RelaySet.sol";
 
 
-contract InnerOwnedSet is BaseOwnedSet {
-	OuterSet public outerSet;
+contract RelayedOwnedSet is BaseOwnedSet {
+	RelaySet public relaySet;
 
-	modifier onlyOuter() {
-		require(msg.sender == address(outerSet));
+	modifier onlyRelay() {
+		require(msg.sender == address(relaySet));
 		_;
 	}
 
-	constructor(address _outerSet, address[] _initial) BaseOwnedSet(_initial)
+	constructor(address _relaySet, address[] _initial) BaseOwnedSet(_initial)
 		public
 	{
-		outerSet = OuterSet(_outerSet);
+		relaySet = RelaySet(_relaySet);
 	}
 
-	function outerReportBenign(address _reporter, address _validator, uint _blockNumber)
+	function relayReportBenign(address _reporter, address _validator, uint _blockNumber)
 		external
-		onlyOuter
+		onlyRelay
 	{
 		baseReportBenign(_reporter, _validator, _blockNumber);
 	}
 
-	function outerReportMalicious(
+	function relayReportMalicious(
 		address _reporter,
 		address _validator,
 		uint _blockNumber,
 		bytes _proof
 	)
 		external
-		onlyOuter
+		onlyRelay
 	{
 		baseReportMalicious(
 			_reporter,
@@ -60,16 +60,16 @@ contract InnerOwnedSet is BaseOwnedSet {
 		);
 	}
 
-	function setOuter(address _outer)
+	function setRelay(address _relaySet)
 		external
 		onlyOwner
 	{
-		outerSet = OuterSet(_outer);
+		relaySet = RelaySet(_relaySet);
 	}
 
 	function finalizeChange()
 		external
-		onlyOuter
+		onlyRelay
 	{
 		baseFinalizeChange();
 	}
@@ -77,6 +77,6 @@ contract InnerOwnedSet is BaseOwnedSet {
 	function initiateChange()
 		private
 	{
-		outerSet.initiateChange(blockhash(block.number - 1), pending);
+		relaySet.initiateChange(blockhash(block.number - 1), pending);
 	}
 }

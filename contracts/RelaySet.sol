@@ -21,18 +21,18 @@
 
 pragma solidity ^0.4.22;
 
-import "./InnerOwnedSet.sol";
 import "./Owned.sol";
+import "./RelayedOwnedSet.sol";
 import "./ValidatorSet.sol";
 
 
-contract OuterSet is Owned, ValidatorSet {
+contract RelaySet is Owned, ValidatorSet {
 	// STATE
 
 	// System address, used by the block sealer.
 	address public systemAddress;
 	// Address of the inner validator set contract
-	InnerOwnedSet public innerSet;
+	RelayedOwnedSet public relayedSet;
 
 	// MODIFIERS
 	modifier onlySystem() {
@@ -40,8 +40,8 @@ contract OuterSet is Owned, ValidatorSet {
 		_;
 	}
 
-	modifier onlyInner() {
-		require(msg.sender == address(innerSet));
+	modifier onlyRelayed() {
+		require(msg.sender == address(relayedSet));
 		_;
 	}
 
@@ -54,7 +54,7 @@ contract OuterSet is Owned, ValidatorSet {
 	// For innerSet
 	function initiateChange(bytes32 _parentHash, address[] _newSet)
 		external
-		onlyInner
+		onlyRelayed
 	{
 		emit InitiateChange(_parentHash, _newSet);
 	}
@@ -64,19 +64,19 @@ contract OuterSet is Owned, ValidatorSet {
 		external
 		onlySystem
 	{
-		innerSet.finalizeChange();
+		relayedSet.finalizeChange();
 	}
 
 	function reportBenign(address _validator, uint256 _blockNumber)
 		external
 	{
-		innerSet.outerReportBenign(msg.sender, _validator, _blockNumber);
+		relayedSet.relayReportBenign(msg.sender, _validator, _blockNumber);
 	}
 
 	function reportMalicious(address _validator, uint256 _blockNumber, bytes _proof)
 		external
 	{
-		innerSet.outerReportMalicious(
+		relayedSet.relayReportMalicious(
 			msg.sender,
 			_validator,
 			_blockNumber,
@@ -84,11 +84,11 @@ contract OuterSet is Owned, ValidatorSet {
 		);
 	}
 
-	function setInner(address _inner)
+	function setRelayed(address _relayedSet)
 		external
 		onlyOwner
 	{
-		innerSet = InnerOwnedSet(_inner);
+		relayedSet = RelayedOwnedSet(_relayedSet);
 	}
 
 	function getValidators()
@@ -96,6 +96,6 @@ contract OuterSet is Owned, ValidatorSet {
 		view
 		returns (address[])
 	{
-		return innerSet.getValidators();
+		return relayedSet.getValidators();
 	}
 }

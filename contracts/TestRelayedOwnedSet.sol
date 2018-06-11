@@ -17,11 +17,11 @@
 
 pragma solidity ^0.4.22;
 
-import "./InnerOwnedSet.sol";
+import "./RelayedOwnedSet.sol";
 import "./RelaySet.sol";
 
 
-contract TestOuterSet is OuterSet {
+contract TestRelaySet is RelaySet {
 	constructor(address _systemAddress)
 		public
 	{
@@ -30,8 +30,8 @@ contract TestOuterSet is OuterSet {
 }
 
 
-contract TestInnerOwnedSet is InnerOwnedSet {
-	constructor(address _outerSet, address[] _initial) InnerOwnedSet(_outerSet, _initial)
+contract TestRelayedOwnedSet is RelayedOwnedSet {
+	constructor(address _outerSet, address[] _initial) RelayedOwnedSet(_outerSet, _initial)
 		public
 	{
 	}

@@ -1,9 +1,9 @@
 "use strict";
 
-const TestOuterSet = artifacts.require("TestOuterSet");
-const TestInnerOwnedSet = artifacts.require("TestInnerOwnedSet");
+const TestRelaySet = artifacts.require("TestRelaySet");
+const TestRelayedOwnedSet = artifacts.require("TestRelayedOwnedSet");
 
-contract("TestInnerOwnedSet", accounts => {
+contract("TestRelayedOwnedSet", accounts => {
   const assertThrowsAsync = async (fn, msg) => {
     try {
       await fn();
@@ -21,10 +21,10 @@ contract("TestInnerOwnedSet", accounts => {
   let _outerSet;
   const outerSet = async () => {
     if (_outerSet === undefined) {
-      _outerSet = await TestOuterSet.new(
+      _outerSet = await TestRelaySet.new(
         SYSTEM,
       );
-      await _outerSet.setInner((await innerOwnedSet()).address);
+      await _outerSet.setRelayed((await innerOwnedSet()).address);
     }
 
     return _outerSet;
@@ -33,7 +33,7 @@ contract("TestInnerOwnedSet", accounts => {
   let _innerOwnedSet;
   const innerOwnedSet = async () => {
     if (_innerOwnedSet === undefined) {
-      _innerOwnedSet = await TestInnerOwnedSet.new(
+      _innerOwnedSet = await TestRelayedOwnedSet.new(
         (await outerSet()).address,
         INITIAL_VALIDATORS,
       );
@@ -377,22 +377,22 @@ contract("TestInnerOwnedSet", accounts => {
 
     // only the owner of the contract can set the outer contract
     await assertThrowsAsync(
-      () => inner.setOuter(accounts[1], { from: accounts[1] }),
+      () => inner.setRelay(accounts[1], { from: accounts[1] }),
       "revert",
     );
 
-    let outer = await inner.outerSet();
+    let outer = await inner.relaySet();
     assert.equal(outer, outerSetAddress);
 
     // we successfully set the outer set of the contract
-    await inner.setOuter(0, { from: OWNER });
+    await inner.setRelay(0, { from: OWNER });
 
     // the `outerSet` should point to the new address
-    outer = await inner.outerSet();
+    outer = await inner.relaySet();
     assert.equal(outer, 0);
 
     // set the original outer set address
-    await inner.setOuter(outerSetAddress, { from: OWNER });
+    await inner.setRelay(outerSetAddress, { from: OWNER });
   });
 
   it("should allow only the outer contract to call `finalizeChange`", async () => {
@@ -408,14 +408,14 @@ contract("TestInnerOwnedSet", accounts => {
     );
 
     // set outer contract to address of accounts[0]
-    await inner.setOuter(accounts[0], { from: OWNER });
+    await inner.setRelay(accounts[0], { from: OWNER });
 
     // inner contract doesn't check for finality in `finalizeChange` since it's
     // only meant be called from outer contract (which tracks finality)
     await inner.finalizeChange({ from: accounts[0] });
 
     // set the original outer set address
-    await inner.setOuter(outerSetAddress, { from: OWNER });
+    await inner.setRelay(outerSetAddress, { from: OWNER });
   });
 
   it("should allow only the inner contract to call `initiateChange`", async () => {
@@ -430,7 +430,7 @@ contract("TestInnerOwnedSet", accounts => {
     );
 
     // set outer contract to address of accounts[0]
-    await outer.setInner(accounts[0], { from: OWNER });
+    await outer.setRelayed(accounts[0], { from: OWNER });
 
     // inner contract doesn't check for finality in `finalizeChange` since it's
     // only meant be called from outer contract (which tracks finality)
@@ -440,7 +440,7 @@ contract("TestInnerOwnedSet", accounts => {
     assert.equal(events.length, 1);
 
     // set the original outer set address
-    await outer.setInner(innerSetAddress, { from: OWNER });
+    await outer.setRelayed(innerSetAddress, { from: OWNER });
   });
 
   it("should allow the owner of the contract to transfer ownership of the contract", async () => {
