@@ -18,36 +18,36 @@ contract("TestRelayedOwnedSet", accounts => {
   const SYSTEM = accounts[9];
   const INITIAL_VALIDATORS = [accounts[0], accounts[1], accounts[2]];
 
-  let _outerSet;
-  const outerSet = async () => {
-    if (_outerSet === undefined) {
-      _outerSet = await TestRelaySet.new(
+  let _relaySet;
+  const relaySet = async () => {
+    if (_relaySet === undefined) {
+      _relaySet = await TestRelaySet.new(
         SYSTEM,
       );
-      await _outerSet.setRelayed((await innerOwnedSet()).address);
+      await _relaySet.setRelayed((await relayedOwnedSet()).address);
     }
 
-    return _outerSet;
+    return _relaySet;
   };
 
-  let _innerOwnedSet;
-  const innerOwnedSet = async () => {
-    if (_innerOwnedSet === undefined) {
-      _innerOwnedSet = await TestRelayedOwnedSet.new(
-        (await outerSet()).address,
+  let _relayedOwnedSet;
+  const relayedOwnedSet = async () => {
+    if (_relayedOwnedSet === undefined) {
+      _relayedOwnedSet = await TestRelayedOwnedSet.new(
+        (await relaySet()).address,
         INITIAL_VALIDATORS,
       );
     }
 
-    return _innerOwnedSet;
+    return _relayedOwnedSet;
   };
 
   it("should initialize the pending and validators set on creation", async () => {
-    const outer = await outerSet();
-    const inner = await innerOwnedSet();
+    const relay = await relaySet();
+    const relayedOwned = await relayedOwnedSet();
 
-    const validators = await outer.getValidators();
-    const pending = await inner.getPending();
+    const validators = await relay.getValidators();
+    const pending = await relayedOwned.getPending();
 
     const expected = INITIAL_VALIDATORS;
 
@@ -55,35 +55,35 @@ contract("TestRelayedOwnedSet", accounts => {
     assert.deepEqual(validators, expected);
     assert.deepEqual(pending, expected);
 
-    const finalized = await inner.finalized();
+    const finalized = await relayedOwned.finalized();
 
     // the change should not be finalized
     assert(!finalized);
 
     // every validator should be added to the `pendingStatus` map
     for (let [index, acc] of expected.entries()) {
-      let [isIn, idx] = await inner.getStatus(acc);
+      let [isIn, idx] = await relayedOwned.getStatus(acc);
       assert(isIn);
       assert.equal(idx, index);
     }
   });
 
   it("should allow the system to finalize changes", async () => {
-    const outer = await outerSet();
-    const inner = await innerOwnedSet();
-    const watcher = inner.ChangeFinalized();
+    const relay = await relaySet();
+    const relayedOwned = await relayedOwnedSet();
+    const watcher = relayedOwned.ChangeFinalized();
 
     // only the system address can finalize changes
     await assertThrowsAsync(
-      () => outer.finalizeChange(),
+      () => relay.finalizeChange(),
       "revert",
     );
 
     // we successfully finalize the change
-    await outer.finalizeChange({ from: SYSTEM });
+    await relay.finalizeChange({ from: SYSTEM });
 
     // the initial validator set should be finalized
-    const finalized = await inner.finalized();
+    const finalized = await relayedOwned.finalized();
     assert(finalized);
 
     // a `ChangeFinalized` event should be emitted
@@ -94,24 +94,24 @@ contract("TestRelayedOwnedSet", accounts => {
 
     // abort if there's no change to finalize
     await assertThrowsAsync(
-      () => outer.finalizeChange({ from: SYSTEM }),
+      () => relay.finalizeChange({ from: SYSTEM }),
       "revert",
     );
   });
 
   it("should allow the owner to add new validators", async () => {
-    const outer = await outerSet();
-    const inner = await innerOwnedSet();
-    const watcher = outer.InitiateChange();
+    const relay = await relaySet();
+    const relayedOwned = await relayedOwnedSet();
+    const watcher = relay.InitiateChange();
 
     // only the owner can add new validators
     await assertThrowsAsync(
-      () => inner.addValidator(accounts[3], { from: accounts[1] }),
+      () => relayedOwned.addValidator(accounts[3], { from: accounts[1] }),
       "revert",
     );
 
     // we successfully add a new validator
-    await inner.addValidator(accounts[3], { from: OWNER });
+    await relayedOwned.addValidator(accounts[3], { from: OWNER });
 
     // a `InitiateChange` event should be emitted
     const events = await watcher.get();
@@ -124,38 +124,38 @@ contract("TestRelayedOwnedSet", accounts => {
     assert.deepEqual(events[0].args._newSet, newSet);
 
     // this change is not finalized yet
-    const finalized = await inner.finalized();
+    const finalized = await relayedOwned.finalized();
     assert(!finalized);
 
     // the pending set should be updated
     assert.deepEqual(
-      await inner.getPending(),
+      await relayedOwned.getPending(),
       newSet,
     );
 
     // the validator set should stay the same
     assert.deepEqual(
-      await outer.getValidators(),
+      await relay.getValidators(),
       INITIAL_VALIDATORS,
     );
 
     // `pendingStatus` should be updated
-    const [isIn, index] = await inner.getStatus(accounts[3]);
+    const [isIn, index] = await relayedOwned.getStatus(accounts[3]);
     assert(isIn);
     assert.equal(index, 3);
 
     // we successfully finalize the change
-    await outer.finalizeChange({ from: SYSTEM });
+    await relay.finalizeChange({ from: SYSTEM });
 
     // the validator set should be updated
     assert.deepEqual(
-      await outer.getValidators(),
+      await relay.getValidators(),
       newSet,
     );
   });
 
   it("should abort when adding a duplicate validator", async () => {
-    const set = await innerOwnedSet();
+    const set = await relayedOwnedSet();
     // we successfully add a new validator
     await assertThrowsAsync(
       () => set.addValidator(accounts[3], { from: OWNER }),
@@ -164,18 +164,18 @@ contract("TestRelayedOwnedSet", accounts => {
   });
 
   it("should allow the owner to remove a validator", async () => {
-    const outer = await outerSet();
-    const inner = await innerOwnedSet();
-    const watcher = outer.InitiateChange();
+    const relay = await relaySet();
+    const relayedOwned = await relayedOwnedSet();
+    const watcher = relay.InitiateChange();
 
     // only the owner can remove validators
     await assertThrowsAsync(
-      () => inner.removeValidator(accounts[3], { from: accounts[1] }),
+      () => relayedOwned.removeValidator(accounts[3], { from: accounts[1] }),
       "revert",
     );
 
     // we successfully remove a validator
-    await inner.removeValidator(accounts[3], { from: OWNER });
+    await relayedOwned.removeValidator(accounts[3], { from: OWNER });
 
     // a `InitiateChange` event should be emitted
     const events = await watcher.get();
@@ -186,38 +186,38 @@ contract("TestRelayedOwnedSet", accounts => {
     assert.deepEqual(events[0].args._newSet, INITIAL_VALIDATORS);
 
     // this change is not finalized yet
-    const finalized = await inner.finalized();
+    const finalized = await relayedOwned.finalized();
     assert(!finalized);
 
     // the pending set should be updated
     assert.deepEqual(
-      await inner.getPending(),
+      await relayedOwned.getPending(),
       INITIAL_VALIDATORS,
     );
 
     // the validator set should stay the same
     assert.deepEqual(
-      await outer.getValidators(),
+      await relay.getValidators(),
       INITIAL_VALIDATORS.concat(accounts[3]),
     );
 
     // `pendingStatus` should be updated
-    const [isIn, index] = await inner.getStatus(accounts[3]);
+    const [isIn, index] = await relayedOwned.getStatus(accounts[3]);
     assert(!isIn);
     assert.equal(index, 0);
 
     // we successfully finalize the change
-    await outer.finalizeChange({ from: SYSTEM });
+    await relay.finalizeChange({ from: SYSTEM });
 
     // the validator set should be updated
     assert.deepEqual(
-      await outer.getValidators(),
+      await relay.getValidators(),
       INITIAL_VALIDATORS,
     );
   });
 
   it("should abort when trying to remove non-existent validator", async () => {
-    const set = await innerOwnedSet();
+    const set = await relayedOwnedSet();
 
     // exists in `pendingStatus` with `isIn` set to false
     await assertThrowsAsync(
@@ -233,38 +233,38 @@ contract("TestRelayedOwnedSet", accounts => {
   });
 
   it("should only allow one change per epoch", async () => {
-    const outer = await outerSet();
-    const inner = await innerOwnedSet();
+    const relay = await relaySet();
+    const relayedOwned = await relayedOwnedSet();
 
-    await inner.addValidator(accounts[3], { from: OWNER });
+    await relayedOwned.addValidator(accounts[3], { from: OWNER });
 
     // disallowed because previous change hasn't been finalized yet
     await assertThrowsAsync(
-      () => inner.removeValidator(accounts[2], { from: OWNER }),
+      () => relayedOwned.removeValidator(accounts[2], { from: OWNER }),
       "revert",
     );
 
-    await outer.finalizeChange({ from: SYSTEM });
+    await relay.finalizeChange({ from: SYSTEM });
 
     // after finalizing it should work successfully
-    await inner.removeValidator(accounts[3], { from: OWNER });
+    await relayedOwned.removeValidator(accounts[3], { from: OWNER });
 
     assert.deepEqual(
-      await inner.getPending(),
+      await relayedOwned.getPending(),
       INITIAL_VALIDATORS,
     );
 
-    await outer.finalizeChange({ from: SYSTEM });
+    await relay.finalizeChange({ from: SYSTEM });
   });
 
   it("should allow current validators to report misbehaviour", async () => {
-    const outer = await outerSet();
-    const inner = await innerOwnedSet();
-    const watcher = inner.Report();
+    const relay = await relaySet();
+    const relayedOwned = await relayedOwnedSet();
+    const watcher = relayedOwned.Report();
 
     // only current validators can report misbehaviour
     await assertThrowsAsync(
-      () => outer.reportMalicious(
+      () => relay.reportMalicious(
         INITIAL_VALIDATORS[0],
         web3.eth.blockNumber - 1,
         [],
@@ -274,7 +274,7 @@ contract("TestRelayedOwnedSet", accounts => {
     );
 
     await assertThrowsAsync(
-      () => outer.reportBenign(
+      () => relay.reportBenign(
         INITIAL_VALIDATORS[0],
         web3.eth.blockNumber - 1,
         { from: accounts[8] },
@@ -282,10 +282,10 @@ contract("TestRelayedOwnedSet", accounts => {
       "revert",
     );
 
-    await inner.getStatus(INITIAL_VALIDATORS[0]);
+    await relayedOwned.getStatus(INITIAL_VALIDATORS[0]);
 
     // successfully report malicious misbehaviour
-    await outer.reportMalicious(
+    await relay.reportMalicious(
       INITIAL_VALIDATORS[0],
       web3.eth.blockNumber - 1,
       [],
@@ -301,7 +301,7 @@ contract("TestRelayedOwnedSet", accounts => {
     assert(events[0].args.malicious);
 
     // successfully report benign misbehaviour
-    await outer.reportBenign(
+    await relay.reportBenign(
       INITIAL_VALIDATORS[0],
       web3.eth.blockNumber - 1,
       { from: INITIAL_VALIDATORS[1] },
@@ -317,7 +317,7 @@ contract("TestRelayedOwnedSet", accounts => {
   });
 
   it("should allow the owner to set required recency of misbehavior reports", async () => {
-    const set = await innerOwnedSet();
+    const set = await relayedOwnedSet();
 
     // only the owner can call `setRecentBlocks`
     await assertThrowsAsync(
@@ -332,7 +332,7 @@ contract("TestRelayedOwnedSet", accounts => {
   });
 
   it("should ignore old misbehaviour reports", async () => {
-    const set = await outerSet();
+    const set = await relaySet();
 
     await assertThrowsAsync(
       () => set.reportBenign(
@@ -345,14 +345,14 @@ contract("TestRelayedOwnedSet", accounts => {
   });
 
   it("should ignore reports from addresses that are not validators", async () => {
-    const outer = await outerSet();
-    const inner = await innerOwnedSet();
+    const relay = await relaySet();
+    const relayedOwned = await relayedOwnedSet();
 
-    await inner.setRecentBlocks(20, { from: OWNER });
+    await relayedOwned.setRecentBlocks(20, { from: OWNER });
 
     // exists in `pendingStatus` with `isIn` set to false
     await assertThrowsAsync(
-      () => outer.reportBenign(
+      () => relay.reportBenign(
         accounts[3],
         web3.eth.blockNumber,
         { from: OWNER },
@@ -362,7 +362,7 @@ contract("TestRelayedOwnedSet", accounts => {
 
     // non-existent in `pendingStatus`
     await assertThrowsAsync(
-      () => outer.reportBenign(
+      () => relay.reportBenign(
         accounts[8],
         web3.eth.blockNumber,
         { from: OWNER },
@@ -371,80 +371,80 @@ contract("TestRelayedOwnedSet", accounts => {
     );
   });
 
-  it("should allows the owner of the inner contract to set the outer contract", async () => {
-    const inner = await innerOwnedSet();
-    const outerSetAddress = (await outerSet()).address;
+  it("should allows the owner of the relayedOwned contract to set the relay contract", async () => {
+    const relayedOwned = await relayedOwnedSet();
+    const relaySetAddress = (await relaySet()).address;
 
-    // only the owner of the contract can set the outer contract
+    // only the owner of the contract can set the relay contract
     await assertThrowsAsync(
-      () => inner.setRelay(accounts[1], { from: accounts[1] }),
+      () => relayedOwned.setRelay(accounts[1], { from: accounts[1] }),
       "revert",
     );
 
-    let outer = await inner.relaySet();
-    assert.equal(outer, outerSetAddress);
+    let relay = await relayedOwned.relaySet();
+    assert.equal(relay, relaySetAddress);
 
-    // we successfully set the outer set of the contract
-    await inner.setRelay(0, { from: OWNER });
+    // we successfully set the relay set of the contract
+    await relayedOwned.setRelay(0, { from: OWNER });
 
-    // the `outerSet` should point to the new address
-    outer = await inner.relaySet();
-    assert.equal(outer, 0);
+    // the `relaySet` should point to the new address
+    relay = await relayedOwned.relaySet();
+    assert.equal(relay, 0);
 
-    // set the original outer set address
-    await inner.setRelay(outerSetAddress, { from: OWNER });
+    // set the original relay set address
+    await relayedOwned.setRelay(relaySetAddress, { from: OWNER });
   });
 
-  it("should allow only the outer contract to call `finalizeChange`", async () => {
-    const inner = await innerOwnedSet();
-    const outerSetAddress = (await outerSet()).address;
+  it("should allow only the relay contract to call `finalizeChange`", async () => {
+    const relayedOwned = await relayedOwnedSet();
+    const relaySetAddress = (await relaySet()).address;
 
-    await inner.addValidator(accounts[3], { from: OWNER });
+    await relayedOwned.addValidator(accounts[3], { from: OWNER });
 
-    // only the outer set can finalize changes
+    // only the relay set can finalize changes
     await assertThrowsAsync(
-      () => inner.finalizeChange({ from: accounts[1] }),
+      () => relayedOwned.finalizeChange({ from: accounts[1] }),
       "revert",
     );
 
-    // set outer contract to address of accounts[0]
-    await inner.setRelay(accounts[0], { from: OWNER });
+    // set relay contract to address of accounts[0]
+    await relayedOwned.setRelay(accounts[0], { from: OWNER });
 
-    // inner contract doesn't check for finality in `finalizeChange` since it's
-    // only meant be called from outer contract (which tracks finality)
-    await inner.finalizeChange({ from: accounts[0] });
+    // relayedOwned contract doesn't check for finality in `finalizeChange` since it's
+    // only meant be called from relay contract (which tracks finality)
+    await relayedOwned.finalizeChange({ from: accounts[0] });
 
-    // set the original outer set address
-    await inner.setRelay(outerSetAddress, { from: OWNER });
+    // set the original relay set address
+    await relayedOwned.setRelay(relaySetAddress, { from: OWNER });
   });
 
-  it("should allow only the inner contract to call `initiateChange`", async () => {
-    const innerSetAddress = (await innerOwnedSet()).address;
-    const outer = await outerSet();
-    const watcher = outer.InitiateChange();
+  it("should allow only the relayedOwned contract to call `initiateChange`", async () => {
+    const relayedOwnedSetAddress = (await relayedOwnedSet()).address;
+    const relay = await relaySet();
+    const watcher = relay.InitiateChange();
 
-    // only the inner set can initiate changes
+    // only the relayedOwned set can initiate changes
     await assertThrowsAsync(
-      () => outer.initiateChange(0, [], { from: accounts[1] }),
+      () => relay.initiateChange(0, [], { from: accounts[1] }),
       "revert",
     );
 
-    // set outer contract to address of accounts[0]
-    await outer.setRelayed(accounts[0], { from: OWNER });
+    // set relay contract to address of accounts[0]
+    await relay.setRelayed(accounts[0], { from: OWNER });
 
-    // inner contract doesn't check for finality in `finalizeChange` since it's
-    // only meant be called from outer contract (which tracks finality)
-    await outer.initiateChange(0, []);
+    // relayedOwned contract doesn't check for finality in `finalizeChange` since it's
+    // only meant be called from relay contract (which tracks finality)
+    await relay.initiateChange(0, []);
 
     const events = await watcher.get();
     assert.equal(events.length, 1);
 
-    // set the original outer set address
-    await outer.setRelayed(innerSetAddress, { from: OWNER });
+    // set the original relay set address
+    await relay.setRelayed(relayedOwnedSetAddress, { from: OWNER });
   });
 
   it("should allow the owner of the contract to transfer ownership of the contract", async () => {
-    const set = await innerOwnedSet();
+    const set = await relayedOwnedSet();
     const watcher = set.NewOwner();
 
     // only the owner of the contract can transfer ownership
