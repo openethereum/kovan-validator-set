@@ -17,8 +17,8 @@
 
 pragma solidity ^0.4.22;
 
-import "./RelayedOwnedSet.sol";
-import "./RelaySet.sol";
+import "../RelayedOwnedSet.sol";
+import "../RelaySet.sol";
 
 
 contract TestRelaySet is RelaySet {

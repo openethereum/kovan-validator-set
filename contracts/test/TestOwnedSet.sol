@@ -17,7 +17,7 @@
 
 pragma solidity ^0.4.22;
 
-import "./OwnedSet.sol";
+import "../OwnedSet.sol";
 
 
 contract TestOwnedSet is OwnedSet {

@@ -21,10 +21,9 @@
 
 pragma solidity ^0.4.22;
 
-import "./Owned.sol";
+import "./interfaces/Owned.sol";
+import "./interfaces/ValidatorSet.sol";
 import "./RelayedOwnedSet.sol";
-import "./ValidatorSet.sol";
-
 
 contract RelaySet is Owned, ValidatorSet {
 	// STATE

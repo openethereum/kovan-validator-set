@@ -17,8 +17,7 @@
 
 pragma solidity ^0.4.22;
 
-import "./Owned.sol";
-import "./OwnedSet.sol";
+import "./interfaces/BaseOwnedSet.sol";
 import "./RelaySet.sol";
 
 
