@@ -64,12 +64,12 @@ contract InnerOwnedSet is Owned, InnerSet, BaseOwnedSet {
 		external
 		onlyOuter
 	{
-		validators = pending;
+		finalizeChangeInternal();
 	}
 
 	function initiateChange()
 		private
 	{
-		outerSet.initiateChange(blockhash(block.number - 1), getPending());
+		outerSet.initiateChange(blockhash(block.number - 1), pending);
 	}
 }

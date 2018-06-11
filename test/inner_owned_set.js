@@ -55,7 +55,7 @@ contract("TestInnerOwnedSet", accounts => {
     assert.deepEqual(validators, expected);
     assert.deepEqual(pending, expected);
 
-    const finalized = await outer.finalized();
+    const finalized = await inner.finalized();
 
     // the change should not be finalized
     assert(!finalized);
@@ -69,20 +69,21 @@ contract("TestInnerOwnedSet", accounts => {
   });
 
   it("should allow the system to finalize changes", async () => {
-    const set = await outerSet();
-    const watcher = set.ChangeFinalized();
+    const outer = await outerSet();
+    const inner = await innerOwnedSet();
+    const watcher = inner.ChangeFinalized();
 
     // only the system address can finalize changes
     await assertThrowsAsync(
-      () => set.finalizeChange(),
+      () => outer.finalizeChange(),
       "revert",
     );
 
     // we successfully finalize the change
-    await set.finalizeChange({ from: SYSTEM });
+    await outer.finalizeChange({ from: SYSTEM });
 
     // the initial validator set should be finalized
-    const finalized = await set.finalized();
+    const finalized = await inner.finalized();
     assert(finalized);
 
     // a `ChangeFinalized` event should be emitted
@@ -93,7 +94,7 @@ contract("TestInnerOwnedSet", accounts => {
 
     // abort if there's no change to finalize
     await assertThrowsAsync(
-      () => set.finalizeChange({ from: SYSTEM }),
+      () => outer.finalizeChange({ from: SYSTEM }),
       "revert",
     );
   });
@@ -123,7 +124,7 @@ contract("TestInnerOwnedSet", accounts => {
     assert.deepEqual(events[0].args._newSet, newSet);
 
     // this change is not finalized yet
-    const finalized = await outer.finalized();
+    const finalized = await inner.finalized();
     assert(!finalized);
 
     // the pending set should be updated
@@ -185,7 +186,7 @@ contract("TestInnerOwnedSet", accounts => {
     assert.deepEqual(events[0].args._newSet, INITIAL_VALIDATORS);
 
     // this change is not finalized yet
-    const finalized = await outer.finalized();
+    const finalized = await inner.finalized();
     assert(!finalized);
 
     // the pending set should be updated
@@ -252,6 +253,8 @@ contract("TestInnerOwnedSet", accounts => {
       await inner.getPending(),
       INITIAL_VALIDATORS,
     );
+
+    await outer.finalizeChange({ from: SYSTEM });
   });
 
   it("should allow current validators to report misbehaviour", async () => {
@@ -396,6 +399,8 @@ contract("TestInnerOwnedSet", accounts => {
     const inner = await innerOwnedSet();
     const outerSetAddress = (await outerSet()).address;
 
+    await inner.addValidator(accounts[3], { from: OWNER });
+
     // only the outer set can finalize changes
     await assertThrowsAsync(
       () => inner.finalizeChange({ from: accounts[1] }),
@@ -411,6 +416,31 @@ contract("TestInnerOwnedSet", accounts => {
 
     // set the original outer set address
     await inner.setOuter(outerSetAddress, { from: OWNER });
+  });
+
+  it("should allow only the inner contract to call `initiateChange`", async () => {
+    const innerSetAddress = (await innerOwnedSet()).address;
+    const outer = await outerSet();
+    const watcher = outer.InitiateChange();
+
+    // only the inner set can initiate changes
+    await assertThrowsAsync(
+      () => outer.initiateChange(0, [], { from: accounts[1] }),
+      "revert",
+    );
+
+    // set outer contract to address of accounts[0]
+    await outer.setInner(accounts[0], { from: OWNER });
+
+    // inner contract doesn't check for finality in `finalizeChange` since it's
+    // only meant be called from outer contract (which tracks finality)
+    await outer.initiateChange(0, []);
+
+    const events = await watcher.get();
+    assert.equal(events.length, 1);
+
+    // set the original outer set address
+    await outer.setInner(innerSetAddress, { from: OWNER });
   });
 
   it("should allow the owner of the contract to transfer ownership of the contract", async () => {

@@ -20,7 +20,15 @@ import "./Owned.sol";
 import "./ValidatorSet.sol";
 
 
-contract BaseOwnedSet is Owned, ValidatorSet {
+contract BaseOwnedSet is Owned {
+	// EVENTS
+	event ChangeFinalized(address[] currentSet);
+
+	// STATE
+
+	// Was the last validator change finalized. Implies validators == pending
+	bool public finalized;
+
 	// TYPES
 	struct AddressStatus {
 		bool isIn;
@@ -68,6 +76,16 @@ contract BaseOwnedSet is Owned, ValidatorSet {
 		_;
 	}
 
+	modifier whenFinalized() {
+		require(finalized);
+		_;
+	}
+
+	modifier whenNotFinalized() {
+		require(!finalized);
+		_;
+	}
+
 	constructor(address[] _initial)
 		public
 	{
@@ -90,7 +108,7 @@ contract BaseOwnedSet is Owned, ValidatorSet {
 		status[_validator].isIn = true;
 		status[_validator].index = pending.length;
 		pending.push(_validator);
-		initiateChange();
+		triggerChange();
 	}
 
 	// Remove a validator.
@@ -110,7 +128,7 @@ contract BaseOwnedSet is Owned, ValidatorSet {
 		// Reset address status
 		delete status[_validator];
 
-		initiateChange();
+		triggerChange();
 	}
 
 	function setRecentBlocks(uint _recentBlocks)
@@ -143,7 +161,7 @@ contract BaseOwnedSet is Owned, ValidatorSet {
 
 	// Called to determine the current set of validators.
 	function getValidators()
-		public
+		external
 		view
 		returns (address[])
 	{
@@ -152,7 +170,7 @@ contract BaseOwnedSet is Owned, ValidatorSet {
 
 	// Called to determine the pending set of validators.
 	function getPending()
-		public
+		external
 		view
 		returns (address[])
 	{
@@ -186,38 +204,40 @@ contract BaseOwnedSet is Owned, ValidatorSet {
 		emit Report(_reporter, _validator, true);
 	}
 
+	// Called when an initiated change reaches finality and is activated.
+	function finalizeChangeInternal()
+		internal
+		whenNotFinalized
+	{
+		validators = pending;
+		finalized = true;
+		emit ChangeFinalized(validators);
+	}
+
 	// PRIVATE
+
+	function triggerChange()
+		private
+		whenFinalized
+	{
+		finalized = false;
+		initiateChange();
+	}
 
 	function initiateChange()
 		private;
 }
 
 
-contract OwnedSet is BaseOwnedSet {
-	// EVENTS
-	event ChangeFinalized(address[] currentSet);
-
+contract OwnedSet is ValidatorSet, BaseOwnedSet {
 	// STATE
 
 	// System address, used by the block sealer.
 	address public systemAddress;
 
-	// Was the last validator change finalized. Implies validators == pending
-	bool public finalized;
-
 	// MODIFIERS
 	modifier onlySystem() {
 		require(msg.sender == systemAddress);
-		_;
-	}
-
-	modifier whenFinalized() {
-		require(finalized);
-		_;
-	}
-
-	modifier whenNotFinalized() {
-		require(!finalized);
 		_;
 	}
 
@@ -235,28 +255,12 @@ contract OwnedSet is BaseOwnedSet {
 		finalizeChangeInternal();
 	}
 
-	// INTERNAL
-
-	// Called when an initiated change reaches finality and is activated.
-	// This method is defined with no modifiers so it can be reused by
-	// contracts inheriting it (e.g. for mocking in tests).
-	function finalizeChangeInternal()
-		internal
-		whenNotFinalized
-	{
-		validators = pending;
-		finalized = true;
-		emit ChangeFinalized(getValidators());
-	}
-
 	// PRIVATE
 
 	// Log desire to change the current list.
 	function initiateChange()
 		private
-		whenFinalized
 	{
-		finalized = false;
-		emit InitiateChange(blockhash(block.number - 1), getPending());
+		emit InitiateChange(blockhash(block.number - 1), pending);
 	}
 }

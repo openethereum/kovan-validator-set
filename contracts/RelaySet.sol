@@ -26,17 +26,12 @@ import "./ValidatorSet.sol";
 
 
 contract OuterSet is Owned, ValidatorSet {
-	// EVENTS
-	event ChangeFinalized(address[] currentSet);
-
 	// STATE
 
 	// System address, used by the block sealer.
 	address public systemAddress;
 	// Address of the inner validator set contract
 	InnerSet public innerSet;
-	// Was the last validator change finalized.
-	bool public finalized;
 
 	// MODIFIERS
 	modifier onlySystem() {
@@ -44,13 +39,8 @@ contract OuterSet is Owned, ValidatorSet {
 		_;
 	}
 
-	modifier onlyInnerAndFinalized() {
-		require(msg.sender == address(innerSet) && finalized);
-		_;
-	}
-
-	modifier whenNotFinalized() {
-		require(!finalized);
+	modifier onlyInner() {
+		require(msg.sender == address(innerSet));
 		_;
 	}
 
@@ -63,9 +53,8 @@ contract OuterSet is Owned, ValidatorSet {
 	// For innerSet
 	function initiateChange(bytes32 _parentHash, address[] _newSet)
 		external
-		onlyInnerAndFinalized
+		onlyInner
 	{
-		finalized = false;
 		emit InitiateChange(_parentHash, _newSet);
 	}
 
@@ -74,7 +63,7 @@ contract OuterSet is Owned, ValidatorSet {
 		external
 		onlySystem
 	{
-		finalizeChangeInternal();
+		innerSet.finalizeChange();
 	}
 
 	function reportBenign(address _validator, uint256 _blockNumber)
@@ -107,17 +96,6 @@ contract OuterSet is Owned, ValidatorSet {
 		returns (address[])
 	{
 		return innerSet.getValidators();
-	}
-
-	// This method is defined with no modifiers so it can be reused by
-	// contracts inheriting it (e.g. for mocking in tests).
-	function finalizeChangeInternal()
-		internal
-		whenNotFinalized
-	{
-		finalized = true;
-		innerSet.finalizeChange();
-		emit ChangeFinalized(getValidators());
 	}
 }
 
