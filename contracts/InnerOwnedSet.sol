@@ -22,7 +22,14 @@ import "./OwnedSet.sol";
 import "./RelaySet.sol";
 
 
-contract InnerOwnedSet is Owned, InnerSet, BaseOwnedSet {
+contract InnerOwnedSet is Owned, BaseOwnedSet {
+	OuterSet public outerSet;
+
+	modifier onlyOuter() {
+		require(msg.sender == address(outerSet));
+		_;
+	}
+
 	constructor(address _outerSet, address[] _initial) BaseOwnedSet(_initial)
 		public
 	{

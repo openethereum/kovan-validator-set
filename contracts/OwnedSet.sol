@@ -138,25 +138,6 @@ contract BaseOwnedSet is Owned {
 		recentBlocks = _recentBlocks;
 	}
 
-	// MISBEHAVIOUR HANDLING
-
-	function reportBenign(address _validator, uint256 _blockNumber)
-		external
-	{
-		reportBenignInternal(msg.sender, _validator, _blockNumber);
-	}
-
-	function reportMalicious(address _validator, uint256 _blockNumber, bytes _proof)
-		external
-	{
-		reportMaliciousInternal(
-			msg.sender,
-			_validator,
-			_blockNumber,
-			_proof
-		);
-	}
-
 	// GETTERS
 
 	// Called to determine the current set of validators.
@@ -253,6 +234,25 @@ contract OwnedSet is ValidatorSet, BaseOwnedSet {
 		onlySystem
 	{
 		finalizeChangeInternal();
+	}
+
+	// MISBEHAVIOUR HANDLING
+
+	function reportBenign(address _validator, uint256 _blockNumber)
+		external
+	{
+		reportBenignInternal(msg.sender, _validator, _blockNumber);
+	}
+
+	function reportMalicious(address _validator, uint256 _blockNumber, bytes _proof)
+		external
+	{
+		reportMaliciousInternal(
+			msg.sender,
+			_validator,
+			_blockNumber,
+			_proof
+		);
 	}
 
 	// PRIVATE

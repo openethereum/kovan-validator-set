@@ -21,6 +21,7 @@
 
 pragma solidity ^0.4.22;
 
+import "./InnerOwnedSet.sol";
 import "./Owned.sol";
 import "./ValidatorSet.sol";
 
@@ -31,7 +32,7 @@ contract OuterSet is Owned, ValidatorSet {
 	// System address, used by the block sealer.
 	address public systemAddress;
 	// Address of the inner validator set contract
-	InnerSet public innerSet;
+	InnerOwnedSet public innerSet;
 
 	// MODIFIERS
 	modifier onlySystem() {
@@ -87,7 +88,7 @@ contract OuterSet is Owned, ValidatorSet {
 		external
 		onlyOwner
 	{
-		innerSet = InnerSet(_inner);
+		innerSet = InnerOwnedSet(_inner);
 	}
 
 	function getValidators()
@@ -97,25 +98,4 @@ contract OuterSet is Owned, ValidatorSet {
 	{
 		return innerSet.getValidators();
 	}
-}
-
-
-contract InnerSet is ValidatorSet {
-	OuterSet public outerSet;
-
-	modifier onlyOuter() {
-		require(msg.sender == address(outerSet));
-		_;
-	}
-
-	function reportBenignOuter(address _reporter, address _validator, uint _blockNumber)
-		external;
-
-	function reportMaliciousOuter(
-		address _reporter,
-		address _validator,
-		uint _blockNumber,
-		bytes _proof
-	)
-		external;
 }
