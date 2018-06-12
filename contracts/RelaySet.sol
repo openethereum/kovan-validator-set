@@ -25,6 +25,9 @@ import "./interfaces/ValidatorSet.sol";
 import "./RelayedOwnedSet.sol";
 
 contract RelaySet is Owned, ValidatorSet {
+	// EVENTS
+	event NewRelayed(address indexed old, address indexed current);
+
 	// STATE
 
 	// System address, used by the block sealer.
@@ -86,6 +89,7 @@ contract RelaySet is Owned, ValidatorSet {
 		external
 		onlyOwner
 	{
+		emit NewRelayed(relayedSet, _relayedSet);
 		relayedSet = RelayedOwnedSet(_relayedSet);
 	}
 

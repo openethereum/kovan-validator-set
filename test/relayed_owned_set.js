@@ -410,8 +410,6 @@ contract("TestRelayedOwnedSet", accounts => {
     // set relay contract to address of accounts[0]
     await relayedOwned.setRelay(accounts[0], { from: OWNER });
 
-    // relayedOwned contract doesn't check for finality in `finalizeChange` since it's
-    // only meant be called from relay contract (which tracks finality)
     await relayedOwned.finalizeChange({ from: accounts[0] });
 
     // set the original relay set address
@@ -421,7 +419,7 @@ contract("TestRelayedOwnedSet", accounts => {
   it("should allow only the relayedOwned contract to call `initiateChange`", async () => {
     const relayedOwnedSetAddress = (await relayedOwnedSet()).address;
     const relay = await relaySet();
-    const watcher = relay.InitiateChange();
+    let watcher = relay.NewRelayed();
 
     // only the relayedOwned set can initiate changes
     await assertThrowsAsync(
@@ -432,11 +430,17 @@ contract("TestRelayedOwnedSet", accounts => {
     // set relay contract to address of accounts[0]
     await relay.setRelayed(accounts[0], { from: OWNER });
 
-    // relayedOwned contract doesn't check for finality in `finalizeChange` since it's
-    // only meant be called from relay contract (which tracks finality)
+    // should emit a `NewRelayed` event
+    let events = await watcher.get();
+    assert.equal(events.length, 1);
+    assert.equal(events[0].args.old, relayedOwnedSetAddress);
+    assert.equal(events[0].args.current, accounts[0]);
+
+    watcher = relay.InitiateChange();
+
     await relay.initiateChange(0, []);
 
-    const events = await watcher.get();
+    events = await watcher.get();
     assert.equal(events.length, 1);
 
     // set the original relay set address
