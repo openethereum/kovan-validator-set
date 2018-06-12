@@ -1,19 +1,11 @@
 "use strict";
 
+const { assertThrowsAsync } = require("./utils.js");
+
 const TestRelaySet = artifacts.require("TestRelaySet");
 const TestRelayedOwnedSet = artifacts.require("TestRelayedOwnedSet");
 
 contract("TestRelayedOwnedSet", accounts => {
-  const assertThrowsAsync = async (fn, msg) => {
-    try {
-      await fn();
-    } catch (err) {
-      assert(err.message.includes(msg), "Expected error to include: " + msg);
-      return;
-    }
-    assert.fail("Expected fn to throw");
-  };
-
   const OWNER = accounts[0];
   const SYSTEM = accounts[9];
   const INITIAL_VALIDATORS = [accounts[0], accounts[1], accounts[2]];
