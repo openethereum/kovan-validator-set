@@ -100,6 +100,20 @@
   {
     "constant": true,
     "inputs": [],
+    "name": "relaySet",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
     "name": "finalized",
     "outputs": [
       {
@@ -126,21 +140,11 @@
     "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [],
-    "name": "systemAddress",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
+      {
+        "name": "_relaySet",
+        "type": "address"
+      },
       {
         "name": "_initial",
         "type": "address[]"
@@ -202,34 +206,12 @@
     "type": "event"
   },
   {
-    "anonymous": false,
+    "constant": false,
     "inputs": [
       {
-        "indexed": true,
-        "name": "_parentHash",
-        "type": "bytes32"
+        "name": "_reporter",
+        "type": "address"
       },
-      {
-        "indexed": false,
-        "name": "_newSet",
-        "type": "address[]"
-      }
-    ],
-    "name": "InitiateChange",
-    "type": "event"
-  },
-  {
-    "constant": false,
-    "inputs": [],
-    "name": "finalizeChange",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
       {
         "name": "_validator",
         "type": "address"
@@ -239,7 +221,7 @@
         "type": "uint256"
       }
     ],
-    "name": "reportBenign",
+    "name": "relayReportBenign",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -248,6 +230,10 @@
   {
     "constant": false,
     "inputs": [
+      {
+        "name": "_reporter",
+        "type": "address"
+      },
       {
         "name": "_validator",
         "type": "address"
@@ -261,7 +247,30 @@
         "type": "bytes"
       }
     ],
-    "name": "reportMalicious",
+    "name": "relayReportMalicious",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_relaySet",
+        "type": "address"
+      }
+    ],
+    "name": "setRelay",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "finalizeChange",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",

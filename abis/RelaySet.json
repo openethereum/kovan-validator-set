@@ -1,33 +1,5 @@
 [
   {
-    "constant": true,
-    "inputs": [],
-    "name": "recentBlocks",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "getPending",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address[]"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "constant": false,
     "inputs": [
       {
@@ -36,48 +8,6 @@
       }
     ],
     "name": "setOwner",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_validator",
-        "type": "address"
-      }
-    ],
-    "name": "removeValidator",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_validator",
-        "type": "address"
-      }
-    ],
-    "name": "addValidator",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_recentBlocks",
-        "type": "uint256"
-      }
-    ],
-    "name": "setRecentBlocks",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -100,25 +30,11 @@
   {
     "constant": true,
     "inputs": [],
-    "name": "finalized",
+    "name": "relayedSet",
     "outputs": [
       {
         "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "getValidators",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address[]"
+        "type": "address"
       }
     ],
     "payable": false,
@@ -140,12 +56,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "name": "_initial",
-        "type": "address[]"
-      }
-    ],
+    "inputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "constructor"
@@ -154,12 +65,17 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "name": "currentSet",
-        "type": "address[]"
+        "indexed": true,
+        "name": "old",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "current",
+        "type": "address"
       }
     ],
-    "name": "ChangeFinalized",
+    "name": "NewRelayed",
     "type": "event"
   },
   {
@@ -167,21 +83,16 @@
     "inputs": [
       {
         "indexed": true,
-        "name": "reporter",
-        "type": "address"
+        "name": "_parentHash",
+        "type": "bytes32"
       },
       {
-        "indexed": true,
-        "name": "reported",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "name": "malicious",
-        "type": "bool"
+        "indexed": false,
+        "name": "_newSet",
+        "type": "address[]"
       }
     ],
-    "name": "Report",
+    "name": "InitiateChange",
     "type": "event"
   },
   {
@@ -202,21 +113,22 @@
     "type": "event"
   },
   {
-    "anonymous": false,
+    "constant": false,
     "inputs": [
       {
-        "indexed": true,
         "name": "_parentHash",
         "type": "bytes32"
       },
       {
-        "indexed": false,
         "name": "_newSet",
         "type": "address[]"
       }
     ],
-    "name": "InitiateChange",
-    "type": "event"
+    "name": "initiateChange",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
     "constant": false,
@@ -265,6 +177,34 @@
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_relayedSet",
+        "type": "address"
+      }
+    ],
+    "name": "setRelayed",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getValidators",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
     "type": "function"
   }
 ]
