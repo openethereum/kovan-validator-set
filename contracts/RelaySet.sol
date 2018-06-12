@@ -95,7 +95,7 @@ contract RelaySet is Owned, ValidatorSet {
 	}
 
 	function getValidators()
-		public
+		external
 		view
 		returns (address[])
 	{
