@@ -13,17 +13,14 @@
 // limitations under the License.
 
 // A testable version of the `OwnedSet` contract that exposes some internal
-// state and allows setting the system address.
+// state and overrides the default system address.
 
 pragma solidity ^0.4.22;
 
-import "./OwnedSet.sol";
+import "../OwnedSet.sol";
 
 
 contract TestOwnedSet is OwnedSet {
-	// allow mocking system address
-	address systemAddress;
-
 	constructor(address _systemAddress, address[] _initial) OwnedSet(_initial)
 		public
 	{
@@ -40,18 +37,5 @@ contract TestOwnedSet is OwnedSet {
 
 		isIn = addressStatus.isIn;
 		index = addressStatus.index;
-	}
-
-	// re-declare these methods to use the mocked system address
-	modifier onlySystem() {
-		require(msg.sender == systemAddress);
-		_;
-	}
-
-	function finalizeChange()
-		external
-		onlySystem
-	{
-		finalizeChangeInternal();
 	}
 }
