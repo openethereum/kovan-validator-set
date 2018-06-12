@@ -24,6 +24,7 @@ import "./interfaces/Owned.sol";
 import "./interfaces/ValidatorSet.sol";
 import "./RelayedOwnedSet.sol";
 
+
 contract RelaySet is Owned, ValidatorSet {
 	// EVENTS
 	event NewRelayed(address indexed old, address indexed current);
