@@ -18,7 +18,7 @@
 // trigger a change, since the engine will be listening for events emitted by
 // the outer relay contract.
 
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.24;
 
 import "./interfaces/Owned.sol";
 import "./interfaces/ValidatorSet.sol";
