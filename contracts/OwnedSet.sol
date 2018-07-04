@@ -14,7 +14,7 @@
 
 // An owned validator set contract where the owner can add or remove validators.
 
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.24;
 
 import "./interfaces/BaseOwnedSet.sol";
 import "./interfaces/ValidatorSet.sol";

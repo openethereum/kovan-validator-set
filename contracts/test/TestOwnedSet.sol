@@ -15,7 +15,7 @@
 // A testable version of the `OwnedSet` contract that exposes some internal
 // state and overrides the default system address.
 
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.24;
 
 import "../OwnedSet.sol";
 

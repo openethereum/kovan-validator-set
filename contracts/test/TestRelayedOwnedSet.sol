@@ -15,7 +15,7 @@
 // A testable version of the `InnerOwnedSet` and `OuterSet` contracts that
 // exposes some internal state and overrides de default system address.
 
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.24;
 
 import "../RelayedOwnedSet.sol";
 import "../RelaySet.sol";

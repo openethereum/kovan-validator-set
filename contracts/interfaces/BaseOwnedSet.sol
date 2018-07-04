@@ -20,7 +20,7 @@
 // currently active validator set. The base implementation of `finalizeChange`
 // validates that there are existing unfinalized changes.
 
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.24;
 
 import "./Owned.sol";
 
