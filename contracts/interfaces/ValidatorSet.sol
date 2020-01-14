@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pragma solidity ^0.4.22;
+pragma solidity >=0.5.0 <0.6.0;
 
 
 interface ValidatorSet {
@@ -44,12 +44,12 @@ interface ValidatorSet {
 	/// Reports malicious misbehavior of validator of the current validator set
 	/// and provides proof of that misbehavor, which varies by engine
 	/// (e.g. double vote).
-	function reportMalicious(address validator, uint256 blockNumber, bytes proof)
+	function reportMalicious(address validator, uint256 blockNumber, bytes calldata proof)
 		external;
 
 	/// Get current validator set (last enacted or initial if no changes ever made).
 	function getValidators()
 		external
 		view
-		returns (address[]);
+		returns (address[] memory);
 }

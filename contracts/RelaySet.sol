@@ -18,7 +18,7 @@
 // trigger a change, since the engine will be listening for events emitted by
 // the outer relay contract.
 
-pragma solidity ^0.4.22;
+pragma solidity >=0.5.0 <0.6.0;
 
 import "./interfaces/Owned.sol";
 import "./interfaces/ValidatorSet.sol";
@@ -27,7 +27,7 @@ import "./RelayedOwnedSet.sol";
 
 contract RelaySet is Owned, ValidatorSet {
 	// EVENTS
-	event NewRelayed(address indexed old, address indexed current);
+	event NewRelayed(RelayedOwnedSet indexed old, address indexed current);
 
 	// STATE
 
@@ -54,7 +54,7 @@ contract RelaySet is Owned, ValidatorSet {
 	}
 
 	// For innerSet
-	function initiateChange(bytes32 _parentHash, address[] _newSet)
+	function initiateChange(bytes32 _parentHash, address[] calldata _newSet)
 		external
 		onlyRelayed
 	{
@@ -75,7 +75,7 @@ contract RelaySet is Owned, ValidatorSet {
 		relayedSet.relayReportBenign(msg.sender, _validator, _blockNumber);
 	}
 
-	function reportMalicious(address _validator, uint256 _blockNumber, bytes _proof)
+	function reportMalicious(address _validator, uint256 _blockNumber, bytes calldata _proof)
 		external
 	{
 		relayedSet.relayReportMalicious(
@@ -97,7 +97,7 @@ contract RelaySet is Owned, ValidatorSet {
 	function getValidators()
 		external
 		view
-		returns (address[])
+		returns (address[] memory)
 	{
 		return relayedSet.getValidators();
 	}

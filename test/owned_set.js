@@ -12,10 +12,7 @@ contract("TestOwnedSet", accounts => {
   let _ownedSet;
   const ownedSet = async () => {
     if (_ownedSet === undefined) {
-      _ownedSet = await TestOwnedSet.new(
-        SYSTEM,
-        INITIAL_VALIDATORS,
-      );
+      _ownedSet = await TestOwnedSet.new(SYSTEM, INITIAL_VALIDATORS);
     }
 
     return _ownedSet;
@@ -39,22 +36,18 @@ contract("TestOwnedSet", accounts => {
     assert(!finalized);
 
     // every validator should be added to the `pendingStatus` map
-    for (let [index, acc] of expected.entries()) {
-      let [isIn, idx] = await set.getStatus(acc);
+    for (let [idx, acc] of expected.entries()) {
+      let { isIn, index } = await set.getStatus(acc);
       assert(isIn);
-      assert.equal(idx, index);
+      assert.equal(index, idx);
     }
   });
 
   it("should allow the system to finalize changes", async () => {
     const set = await ownedSet();
-    const watcher = set.ChangeFinalized();
 
     // only the system address can finalize changes
-    await assertThrowsAsync(
-      () => set.finalizeChange(),
-      "revert",
-    );
+    await assertThrowsAsync(() => set.finalizeChange(), "revert");
 
     // we successfully finalize the change
     await set.finalizeChange({ from: SYSTEM });
@@ -64,37 +57,37 @@ contract("TestOwnedSet", accounts => {
     assert(finalized);
 
     // a `ChangeFinalized` event should be emitted
-    const events = await watcher.get();
-
+    const events = await set.getPastEvents("ChangeFinalized");
     assert.equal(events.length, 1);
     assert.deepEqual(events[0].args.currentSet, INITIAL_VALIDATORS);
 
     // abort if there's no change to finalize
     await assertThrowsAsync(
       () => set.finalizeChange({ from: SYSTEM }),
-      "revert",
+      "revert"
     );
   });
 
   it("should allow the owner to add new validators", async () => {
     const set = await ownedSet();
-    const watcher = set.InitiateChange();
 
     // only the owner can add new validators
     await assertThrowsAsync(
       () => set.addValidator(accounts[3], { from: accounts[1] }),
-      "revert",
+      "revert"
     );
 
     // we successfully add a new validator
     await set.addValidator(accounts[3], { from: OWNER });
 
     // a `InitiateChange` event should be emitted
-    const events = await watcher.get();
+    const events = await set.getPastEvents("InitiateChange");
 
     const newSet = INITIAL_VALIDATORS.concat(accounts[3]);
 
-    const parent = await web3.eth.getBlock(web3.eth.blockNumber - 1);
+    const parent = await web3.eth.getBlock(
+      (await web3.eth.getBlockNumber()) - 1
+    );
     assert.equal(events.length, 1);
     assert.equal(events[0].args._parentHash, parent.hash);
     assert.deepEqual(events[0].args._newSet, newSet);
@@ -104,19 +97,13 @@ contract("TestOwnedSet", accounts => {
     assert(!finalized);
 
     // the pending set should be updated
-    assert.deepEqual(
-      await set.getPending(),
-      newSet,
-    );
+    assert.deepEqual(await set.getPending(), newSet);
 
     // the validator set should stay the same
-    assert.deepEqual(
-      await set.getValidators(),
-      INITIAL_VALIDATORS,
-    );
+    assert.deepEqual(await set.getValidators(), INITIAL_VALIDATORS);
 
     // `pendingStatus` should be updated
-    const [isIn, index] = await set.getStatus(accounts[3]);
+    const { isIn, index } = await set.getStatus(accounts[3]);
     assert(isIn);
     assert.equal(index, 3);
 
@@ -124,10 +111,7 @@ contract("TestOwnedSet", accounts => {
     await set.finalizeChange({ from: SYSTEM });
 
     // the validator set should be updated
-    assert.deepEqual(
-      await set.getValidators(),
-      newSet,
-    );
+    assert.deepEqual(await set.getValidators(), newSet);
   });
 
   it("should abort when adding a duplicate validator", async () => {
@@ -135,27 +119,28 @@ contract("TestOwnedSet", accounts => {
     // we successfully add a new validator
     await assertThrowsAsync(
       () => set.addValidator(accounts[3], { from: OWNER }),
-      "revert",
+      "revert"
     );
   });
 
   it("should allow the owner to remove a validator", async () => {
     const set = await ownedSet();
-    const watcher = set.InitiateChange();
 
     // only the owner can remove validators
     await assertThrowsAsync(
       () => set.removeValidator(accounts[3], { from: accounts[1] }),
-      "revert",
+      "revert"
     );
 
     // we successfully remove a validator
     await set.removeValidator(accounts[3], { from: OWNER });
 
     // a `InitiateChange` event should be emitted
-    const events = await watcher.get();
+    const events = await set.getPastEvents("InitiateChange");
 
-    const parent = await web3.eth.getBlock(web3.eth.blockNumber - 1);
+    const parent = await web3.eth.getBlock(
+      (await web3.eth.getBlockNumber()) - 1
+    );
     assert.equal(events.length, 1);
     assert.equal(events[0].args._parentHash, parent.hash);
     assert.deepEqual(events[0].args._newSet, INITIAL_VALIDATORS);
@@ -165,19 +150,16 @@ contract("TestOwnedSet", accounts => {
     assert(!finalized);
 
     // the pending set should be updated
-    assert.deepEqual(
-      await set.getPending(),
-      INITIAL_VALIDATORS,
-    );
+    assert.deepEqual(await set.getPending(), INITIAL_VALIDATORS);
 
     // the validator set should stay the same
     assert.deepEqual(
       await set.getValidators(),
-      INITIAL_VALIDATORS.concat(accounts[3]),
+      INITIAL_VALIDATORS.concat(accounts[3])
     );
 
     // `pendingStatus` should be updated
-    const [isIn, index] = await set.getStatus(accounts[3]);
+    const { isIn, index } = await set.getStatus(accounts[3]);
     assert(!isIn);
     assert.equal(index, 0);
 
@@ -185,10 +167,7 @@ contract("TestOwnedSet", accounts => {
     await set.finalizeChange({ from: SYSTEM });
 
     // the validator set should be updated
-    assert.deepEqual(
-      await set.getValidators(),
-      INITIAL_VALIDATORS,
-    );
+    assert.deepEqual(await set.getValidators(), INITIAL_VALIDATORS);
   });
 
   it("should abort when trying to remove non-existent validator", async () => {
@@ -197,13 +176,13 @@ contract("TestOwnedSet", accounts => {
     // exists in `pendingStatus` with `isIn` set to false
     await assertThrowsAsync(
       () => set.removeValidator(accounts[3], { from: OWNER }),
-      "revert",
+      "revert"
     );
 
     // non-existent in `pendingStatus`
     await assertThrowsAsync(
       () => set.removeValidator(accounts[8], { from: OWNER }),
-      "revert",
+      "revert"
     );
   });
 
@@ -215,7 +194,7 @@ contract("TestOwnedSet", accounts => {
     // disallowed because previous change hasn't been finalized yet
     await assertThrowsAsync(
       () => set.removeValidator(accounts[2], { from: OWNER }),
-      "revert",
+      "revert"
     );
 
     await set.finalizeChange({ from: SYSTEM });
@@ -223,62 +202,52 @@ contract("TestOwnedSet", accounts => {
     // after finalizing it should work successfully
     await set.removeValidator(accounts[3], { from: OWNER });
 
-    assert.deepEqual(
-      await set.getPending(),
-      INITIAL_VALIDATORS,
-    );
+    assert.deepEqual(await set.getPending(), INITIAL_VALIDATORS);
   });
 
   it("should allow current validators to report misbehaviour", async () => {
     const set = await ownedSet();
-    const watcher = set.Report();
-
+    let blockNumber = await web3.eth.getBlockNumber();
     // only current validators can report misbehaviour
     await assertThrowsAsync(
-      () => set.reportMalicious(
-        INITIAL_VALIDATORS[0],
-        web3.eth.blockNumber - 1,
-        [],
-        { from: accounts[8] },
-      ),
-      "revert",
+      () =>
+        set.reportMalicious(INITIAL_VALIDATORS[0], blockNumber - 1, [], {
+          from: accounts[8]
+        }),
+      "revert"
     );
 
+    blockNumber = await web3.eth.getBlockNumber();
     await assertThrowsAsync(
-      () => set.reportBenign(
-        INITIAL_VALIDATORS[0],
-        web3.eth.blockNumber - 1,
-        { from: accounts[8] },
-      ),
-      "revert",
+      () =>
+        set.reportBenign(INITIAL_VALIDATORS[0], blockNumber - 1, {
+          from: accounts[8]
+        }),
+      "revert"
     );
 
+    blockNumber = await web3.eth.getBlockNumber();
     // successfully report malicious misbehaviour
-    await set.reportMalicious(
-      INITIAL_VALIDATORS[0],
-      web3.eth.blockNumber - 1,
-      [],
-      { from: INITIAL_VALIDATORS[1] },
-    );
+    await set.reportMalicious(INITIAL_VALIDATORS[0], blockNumber - 1, [], {
+      from: INITIAL_VALIDATORS[1]
+    });
 
     // it should emit a `Report` event
-    let events = await watcher.get();
+    let events = await set.getPastEvents("Report");
 
     assert.equal(events.length, 1);
     assert.equal(events[0].args.reporter, INITIAL_VALIDATORS[1]);
     assert.equal(events[0].args.reported, INITIAL_VALIDATORS[0]);
     assert(events[0].args.malicious);
 
+    blockNumber = await web3.eth.getBlockNumber();
     // successfully report benign misbehaviour
-    await set.reportBenign(
-      INITIAL_VALIDATORS[0],
-      web3.eth.blockNumber - 1,
-      { from: INITIAL_VALIDATORS[1] },
-    );
+    await set.reportBenign(INITIAL_VALIDATORS[0], blockNumber - 1, {
+      from: INITIAL_VALIDATORS[1]
+    });
 
     // it should emit a `Report` event
-    events = await watcher.get();
-
+    events = await await set.getPastEvents("Report");
     assert.equal(events.length, 1);
     assert.equal(events[0].args.reporter, INITIAL_VALIDATORS[1]);
     assert.equal(events[0].args.reported, INITIAL_VALIDATORS[0]);
@@ -291,7 +260,7 @@ contract("TestOwnedSet", accounts => {
     // only the owner can call `setRecentBlocks`
     await assertThrowsAsync(
       () => set.setRecentBlocks(1, { from: accounts[1] }),
-      "revert",
+      "revert"
     );
 
     await set.setRecentBlocks(1, { from: OWNER });
@@ -302,14 +271,13 @@ contract("TestOwnedSet", accounts => {
 
   it("should ignore old misbehaviour reports", async () => {
     const set = await ownedSet();
-
+    const blockNumber = await web3.eth.getBlockNumber();
     await assertThrowsAsync(
-      () => set.reportBenign(
-        accounts[0],
-        web3.eth.blockNumber - 1,
-        { from: OWNER },
-      ),
-      "revert",
+      () =>
+        set.reportBenign(accounts[0], blockNumber - 1, {
+          from: OWNER
+        }),
+      "revert"
     );
   });
 
@@ -317,36 +285,27 @@ contract("TestOwnedSet", accounts => {
     const set = await ownedSet();
 
     await set.setRecentBlocks(20, { from: OWNER });
-
+    let blockNumber = await web3.eth.getBlockNumber();
     // exists in `pendingStatus` with `isIn` set to false
     await assertThrowsAsync(
-      () => set.reportBenign(
-        accounts[3],
-        web3.eth.blockNumber,
-        { from: OWNER },
-      ),
-      "revert",
+      () => set.reportBenign(accounts[3], blockNumber, { from: OWNER }),
+      "revert"
     );
 
     // non-existent in `pendingStatus`
     await assertThrowsAsync(
-      () => set.reportBenign(
-        accounts[8],
-        web3.eth.blockNumber,
-        { from: OWNER },
-      ),
-      "revert",
+      () => set.reportBenign(accounts[8], blockNumber, { from: OWNER }),
+      "revert"
     );
   });
 
   it("should allow the owner of the contract to transfer ownership of the contract", async () => {
     const set = await ownedSet();
-    const watcher = set.NewOwner();
 
     // only the owner of the contract can transfer ownership
     await assertThrowsAsync(
       () => set.setOwner(accounts[1], { from: accounts[1] }),
-      "revert",
+      "revert"
     );
 
     let owner = await set.owner();
@@ -360,7 +319,7 @@ contract("TestOwnedSet", accounts => {
     assert.equal(owner, accounts[1]);
 
     // it should emit a `NewOwner` event
-    const events = await watcher.get();
+    const events = await set.getPastEvents("NewOwner");
 
     assert.equal(events.length, 1);
     assert.equal(events[0].args.old, accounts[0]);
@@ -369,7 +328,7 @@ contract("TestOwnedSet", accounts => {
     // the old owner can no longer set a new owner
     await assertThrowsAsync(
       () => set.setOwner(accounts[0], { from: accounts[0] }),
-      "revert",
+      "revert"
     );
   });
 });

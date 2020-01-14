@@ -13,10 +13,9 @@ contract("TestRelayedOwnedSet", accounts => {
   let _relaySet;
   const relaySet = async () => {
     if (_relaySet === undefined) {
-      _relaySet = await TestRelaySet.new(
-        SYSTEM,
-      );
-      await _relaySet.setRelayed((await relayedOwnedSet()).address);
+      _relaySet = await TestRelaySet.new(SYSTEM);
+      const aaa = (await relayedOwnedSet()).address;
+      await _relaySet.setRelayed(aaa);
     }
 
     return _relaySet;
@@ -27,7 +26,7 @@ contract("TestRelayedOwnedSet", accounts => {
     if (_relayedOwnedSet === undefined) {
       _relayedOwnedSet = await TestRelayedOwnedSet.new(
         (await relaySet()).address,
-        INITIAL_VALIDATORS,
+        INITIAL_VALIDATORS
       );
     }
 
@@ -53,8 +52,8 @@ contract("TestRelayedOwnedSet", accounts => {
     assert(!finalized);
 
     // every validator should be added to the `pendingStatus` map
-    for (let [index, acc] of expected.entries()) {
-      let [isIn, idx] = await relayedOwned.getStatus(acc);
+    for (let [idx, acc] of expected.entries()) {
+      let { isIn, index } = await relayedOwned.getStatus(acc);
       assert(isIn);
       assert.equal(idx, index);
     }
@@ -63,13 +62,9 @@ contract("TestRelayedOwnedSet", accounts => {
   it("should allow the system to finalize changes", async () => {
     const relay = await relaySet();
     const relayedOwned = await relayedOwnedSet();
-    const watcher = relayedOwned.ChangeFinalized();
 
     // only the system address can finalize changes
-    await assertThrowsAsync(
-      () => relay.finalizeChange(),
-      "revert",
-    );
+    await assertThrowsAsync(() => relay.finalizeChange(), "revert");
 
     // we successfully finalize the change
     await relay.finalizeChange({ from: SYSTEM });
@@ -79,38 +74,38 @@ contract("TestRelayedOwnedSet", accounts => {
     assert(finalized);
 
     // a `ChangeFinalized` event should be emitted
-    const events = await watcher.get();
-
+    const events = await relayedOwned.getPastEvents("ChangeFinalized");
     assert.equal(events.length, 1);
     assert.deepEqual(events[0].args.currentSet, INITIAL_VALIDATORS);
 
     // abort if there's no change to finalize
     await assertThrowsAsync(
       () => relay.finalizeChange({ from: SYSTEM }),
-      "revert",
+      "revert"
     );
   });
 
   it("should allow the owner to add new validators", async () => {
     const relay = await relaySet();
     const relayedOwned = await relayedOwnedSet();
-    const watcher = relay.InitiateChange();
 
     // only the owner can add new validators
     await assertThrowsAsync(
       () => relayedOwned.addValidator(accounts[3], { from: accounts[1] }),
-      "revert",
+      "revert"
     );
 
     // we successfully add a new validator
     await relayedOwned.addValidator(accounts[3], { from: OWNER });
 
     // a `InitiateChange` event should be emitted
-    const events = await watcher.get();
+    const events = await relay.getPastEvents("InitiateChange");
 
     const newSet = INITIAL_VALIDATORS.concat(accounts[3]);
 
-    const parent = await web3.eth.getBlock(web3.eth.blockNumber - 1);
+    const parent = await web3.eth.getBlock(
+      (await web3.eth.getBlockNumber()) - 1
+    );
     assert.equal(events.length, 1);
     assert.equal(events[0].args._parentHash, parent.hash);
     assert.deepEqual(events[0].args._newSet, newSet);
@@ -120,19 +115,13 @@ contract("TestRelayedOwnedSet", accounts => {
     assert(!finalized);
 
     // the pending set should be updated
-    assert.deepEqual(
-      await relayedOwned.getPending(),
-      newSet,
-    );
+    assert.deepEqual(await relayedOwned.getPending(), newSet);
 
     // the validator set should stay the same
-    assert.deepEqual(
-      await relay.getValidators(),
-      INITIAL_VALIDATORS,
-    );
+    assert.deepEqual(await relay.getValidators(), INITIAL_VALIDATORS);
 
     // `pendingStatus` should be updated
-    const [isIn, index] = await relayedOwned.getStatus(accounts[3]);
+    const { isIn, index } = await relayedOwned.getStatus(accounts[3]);
     assert(isIn);
     assert.equal(index, 3);
 
@@ -140,10 +129,7 @@ contract("TestRelayedOwnedSet", accounts => {
     await relay.finalizeChange({ from: SYSTEM });
 
     // the validator set should be updated
-    assert.deepEqual(
-      await relay.getValidators(),
-      newSet,
-    );
+    assert.deepEqual(await relay.getValidators(), newSet);
   });
 
   it("should abort when adding a duplicate validator", async () => {
@@ -151,28 +137,29 @@ contract("TestRelayedOwnedSet", accounts => {
     // we successfully add a new validator
     await assertThrowsAsync(
       () => set.addValidator(accounts[3], { from: OWNER }),
-      "revert",
+      "revert"
     );
   });
 
   it("should allow the owner to remove a validator", async () => {
     const relay = await relaySet();
     const relayedOwned = await relayedOwnedSet();
-    const watcher = relay.InitiateChange();
 
     // only the owner can remove validators
     await assertThrowsAsync(
       () => relayedOwned.removeValidator(accounts[3], { from: accounts[1] }),
-      "revert",
+      "revert"
     );
 
     // we successfully remove a validator
     await relayedOwned.removeValidator(accounts[3], { from: OWNER });
 
     // a `InitiateChange` event should be emitted
-    const events = await watcher.get();
+    const events = await relay.getPastEvents("InitiateChange");
 
-    const parent = await web3.eth.getBlock(web3.eth.blockNumber - 1);
+    const parent = await web3.eth.getBlock(
+      (await web3.eth.getBlockNumber()) - 1
+    );
     assert.equal(events.length, 1);
     assert.equal(events[0].args._parentHash, parent.hash);
     assert.deepEqual(events[0].args._newSet, INITIAL_VALIDATORS);
@@ -182,19 +169,16 @@ contract("TestRelayedOwnedSet", accounts => {
     assert(!finalized);
 
     // the pending set should be updated
-    assert.deepEqual(
-      await relayedOwned.getPending(),
-      INITIAL_VALIDATORS,
-    );
+    assert.deepEqual(await relayedOwned.getPending(), INITIAL_VALIDATORS);
 
     // the validator set should stay the same
     assert.deepEqual(
       await relay.getValidators(),
-      INITIAL_VALIDATORS.concat(accounts[3]),
+      INITIAL_VALIDATORS.concat(accounts[3])
     );
 
     // `pendingStatus` should be updated
-    const [isIn, index] = await relayedOwned.getStatus(accounts[3]);
+    const { isIn, index } = await relayedOwned.getStatus(accounts[3]);
     assert(!isIn);
     assert.equal(index, 0);
 
@@ -202,10 +186,7 @@ contract("TestRelayedOwnedSet", accounts => {
     await relay.finalizeChange({ from: SYSTEM });
 
     // the validator set should be updated
-    assert.deepEqual(
-      await relay.getValidators(),
-      INITIAL_VALIDATORS,
-    );
+    assert.deepEqual(await relay.getValidators(), INITIAL_VALIDATORS);
   });
 
   it("should abort when trying to remove non-existent validator", async () => {
@@ -214,13 +195,13 @@ contract("TestRelayedOwnedSet", accounts => {
     // exists in `pendingStatus` with `isIn` set to false
     await assertThrowsAsync(
       () => set.removeValidator(accounts[3], { from: OWNER }),
-      "revert",
+      "revert"
     );
 
     // non-existent in `pendingStatus`
     await assertThrowsAsync(
       () => set.removeValidator(accounts[8], { from: OWNER }),
-      "revert",
+      "revert"
     );
   });
 
@@ -233,7 +214,7 @@ contract("TestRelayedOwnedSet", accounts => {
     // disallowed because previous change hasn't been finalized yet
     await assertThrowsAsync(
       () => relayedOwned.removeValidator(accounts[2], { from: OWNER }),
-      "revert",
+      "revert"
     );
 
     await relay.finalizeChange({ from: SYSTEM });
@@ -241,10 +222,7 @@ contract("TestRelayedOwnedSet", accounts => {
     // after finalizing it should work successfully
     await relayedOwned.removeValidator(accounts[3], { from: OWNER });
 
-    assert.deepEqual(
-      await relayedOwned.getPending(),
-      INITIAL_VALIDATORS,
-    );
+    assert.deepEqual(await relayedOwned.getPending(), INITIAL_VALIDATORS);
 
     await relay.finalizeChange({ from: SYSTEM });
   });
@@ -252,26 +230,24 @@ contract("TestRelayedOwnedSet", accounts => {
   it("should allow current validators to report misbehaviour", async () => {
     const relay = await relaySet();
     const relayedOwned = await relayedOwnedSet();
-    const watcher = relayedOwned.Report();
 
+    let blockNumber = await web3.eth.getBlockNumber();
     // only current validators can report misbehaviour
     await assertThrowsAsync(
-      () => relay.reportMalicious(
-        INITIAL_VALIDATORS[0],
-        web3.eth.blockNumber - 1,
-        [],
-        { from: accounts[8] },
-      ),
-      "revert",
+      () =>
+        relay.reportMalicious(INITIAL_VALIDATORS[0], blockNumber - 1, [], {
+          from: accounts[8]
+        }),
+      "revert"
     );
 
+    blockNumber = await web3.eth.getBlockNumber();
     await assertThrowsAsync(
-      () => relay.reportBenign(
-        INITIAL_VALIDATORS[0],
-        web3.eth.blockNumber - 1,
-        { from: accounts[8] },
-      ),
-      "revert",
+      () =>
+        relay.reportBenign(INITIAL_VALIDATORS[0], blockNumber - 1, {
+          from: accounts[8]
+        }),
+      "revert"
     );
 
     await relayedOwned.getStatus(INITIAL_VALIDATORS[0]);
@@ -279,13 +255,15 @@ contract("TestRelayedOwnedSet", accounts => {
     // successfully report malicious misbehaviour
     await relay.reportMalicious(
       INITIAL_VALIDATORS[0],
-      web3.eth.blockNumber - 1,
+      (await web3.eth.getBlockNumber()) - 1,
       [],
-      { from: INITIAL_VALIDATORS[1] },
+      {
+        from: INITIAL_VALIDATORS[1]
+      }
     );
 
     // it should emit a `Report` event
-    let events = await watcher.get();
+    let events = await relayedOwned.getPastEvents("Report");
 
     assert.equal(events.length, 1);
     assert.equal(events[0].args.reporter, INITIAL_VALIDATORS[1]);
@@ -295,12 +273,14 @@ contract("TestRelayedOwnedSet", accounts => {
     // successfully report benign misbehaviour
     await relay.reportBenign(
       INITIAL_VALIDATORS[0],
-      web3.eth.blockNumber - 1,
-      { from: INITIAL_VALIDATORS[1] },
+      (await web3.eth.getBlockNumber()) - 1,
+      {
+        from: INITIAL_VALIDATORS[1]
+      }
     );
 
     // it should emit a `Report` event
-    events = await watcher.get();
+    events = await relayedOwned.getPastEvents("Report");
 
     assert.equal(events.length, 1);
     assert.equal(events[0].args.reporter, INITIAL_VALIDATORS[1]);
@@ -314,7 +294,7 @@ contract("TestRelayedOwnedSet", accounts => {
     // only the owner can call `setRecentBlocks`
     await assertThrowsAsync(
       () => set.setRecentBlocks(1, { from: accounts[1] }),
-      "revert",
+      "revert"
     );
 
     await set.setRecentBlocks(1, { from: OWNER });
@@ -326,13 +306,13 @@ contract("TestRelayedOwnedSet", accounts => {
   it("should ignore old misbehaviour reports", async () => {
     const set = await relaySet();
 
+    const blockNumber = await web3.eth.getBlockNumber();
     await assertThrowsAsync(
-      () => set.reportBenign(
-        accounts[0],
-        web3.eth.blockNumber - 1,
-        { from: OWNER },
-      ),
-      "revert",
+      () =>
+        set.reportBenign(accounts[0], blockNumber - 1, {
+          from: OWNER
+        }),
+      "revert"
     );
   });
 
@@ -342,24 +322,18 @@ contract("TestRelayedOwnedSet", accounts => {
 
     await relayedOwned.setRecentBlocks(20, { from: OWNER });
 
+    let blockNumber = await web3.eth.getBlockNumber();
     // exists in `pendingStatus` with `isIn` set to false
     await assertThrowsAsync(
-      () => relay.reportBenign(
-        accounts[3],
-        web3.eth.blockNumber,
-        { from: OWNER },
-      ),
-      "revert",
+      () => relay.reportBenign(accounts[3], blockNumber, { from: OWNER }),
+      "revert"
     );
 
+    blockNumber = await web3.eth.getBlockNumber();
     // non-existent in `pendingStatus`
     await assertThrowsAsync(
-      () => relay.reportBenign(
-        accounts[8],
-        web3.eth.blockNumber,
-        { from: OWNER },
-      ),
-      "revert",
+      () => relay.reportBenign(accounts[8], blockNumber, { from: OWNER }),
+      "revert"
     );
   });
 
@@ -370,18 +344,20 @@ contract("TestRelayedOwnedSet", accounts => {
     // only the owner of the contract can set the relay contract
     await assertThrowsAsync(
       () => relayedOwned.setRelay(accounts[1], { from: accounts[1] }),
-      "revert",
+      "revert"
     );
 
     let relay = await relayedOwned.relaySet();
     assert.equal(relay, relaySetAddress);
 
     // we successfully set the relay set of the contract
-    await relayedOwned.setRelay(0, { from: OWNER });
+    await relayedOwned.setRelay("0x0000000000000000000000000000000000000000", {
+      from: OWNER
+    });
 
     // the `relaySet` should point to the new address
     relay = await relayedOwned.relaySet();
-    assert.equal(relay, 0);
+    assert.equal(relay, "0x0000000000000000000000000000000000000000");
 
     // set the original relay set address
     await relayedOwned.setRelay(relaySetAddress, { from: OWNER });
@@ -396,7 +372,7 @@ contract("TestRelayedOwnedSet", accounts => {
     // only the relay set can finalize changes
     await assertThrowsAsync(
       () => relayedOwned.finalizeChange({ from: accounts[1] }),
-      "revert",
+      "revert"
     );
 
     // set relay contract to address of accounts[0]
@@ -411,28 +387,26 @@ contract("TestRelayedOwnedSet", accounts => {
   it("should allow only the relayedOwned contract to call `initiateChange`", async () => {
     const relayedOwnedSetAddress = (await relayedOwnedSet()).address;
     const relay = await relaySet();
-    let watcher = relay.NewRelayed();
-
+    const kkk = await relay.relayedSet();
     // only the relayedOwned set can initiate changes
     await assertThrowsAsync(
-      () => relay.initiateChange(0, [], { from: accounts[1] }),
-      "revert",
+      () =>
+        relay.initiateChange(web3.utils.sha3("0"), [], { from: accounts[1] }),
+      "revert"
     );
 
     // set relay contract to address of accounts[0]
     await relay.setRelayed(accounts[0], { from: OWNER });
 
     // should emit a `NewRelayed` event
-    let events = await watcher.get();
+    let events = await relay.getPastEvents("NewRelayed");
     assert.equal(events.length, 1);
     assert.equal(events[0].args.old, relayedOwnedSetAddress);
     assert.equal(events[0].args.current, accounts[0]);
 
-    watcher = relay.InitiateChange();
+    await relay.initiateChange(web3.utils.sha3("0"), []);
 
-    await relay.initiateChange(0, []);
-
-    events = await watcher.get();
+    events = await relay.getPastEvents("InitiateChange");
     assert.equal(events.length, 1);
 
     // set the original relay set address
@@ -441,12 +415,11 @@ contract("TestRelayedOwnedSet", accounts => {
 
   it("should allow the owner of the contract to transfer ownership of the contract", async () => {
     const set = await relayedOwnedSet();
-    const watcher = set.NewOwner();
 
     // only the owner of the contract can transfer ownership
     await assertThrowsAsync(
       () => set.setOwner(accounts[1], { from: accounts[1] }),
-      "revert",
+      "revert"
     );
 
     let owner = await set.owner();
@@ -460,7 +433,7 @@ contract("TestRelayedOwnedSet", accounts => {
     assert.equal(owner, accounts[1]);
 
     // it should emit a `NewOwner` event
-    const events = await watcher.get();
+    const events = await set.getPastEvents("NewOwner");
 
     assert.equal(events.length, 1);
     assert.equal(events[0].args.old, accounts[0]);
@@ -469,7 +442,7 @@ contract("TestRelayedOwnedSet", accounts => {
     // the old owner can no longer set a new owner
     await assertThrowsAsync(
       () => set.setOwner(accounts[0], { from: accounts[0] }),
-      "revert",
+      "revert"
     );
   });
 });
