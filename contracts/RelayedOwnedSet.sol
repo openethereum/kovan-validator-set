@@ -15,7 +15,7 @@
 // A `OwnedSet` validator contract that is meant to be relayed by a `RelaySet`
 // contract.
 
-pragma solidity ^0.4.22;
+pragma solidity >=0.5.0 <0.6.0;
 
 import "./interfaces/BaseOwnedSet.sol";
 import "./RelaySet.sol";
@@ -29,7 +29,7 @@ contract RelayedOwnedSet is BaseOwnedSet {
 		_;
 	}
 
-	constructor(address _relaySet, address[] _initial) BaseOwnedSet(_initial)
+	constructor(address _relaySet, address[] memory _initial) BaseOwnedSet(_initial)
 		public
 	{
 		relaySet = RelaySet(_relaySet);
@@ -46,7 +46,7 @@ contract RelayedOwnedSet is BaseOwnedSet {
 		address _reporter,
 		address _validator,
 		uint _blockNumber,
-		bytes _proof
+		bytes calldata _proof
 	)
 		external
 		onlyRelay

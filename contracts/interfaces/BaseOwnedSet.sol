@@ -20,7 +20,7 @@
 // currently active validator set. The base implementation of `finalizeChange`
 // validates that there are existing unfinalized changes.
 
-pragma solidity ^0.4.22;
+pragma solidity >=0.5.0 <0.6.0;
 
 import "./Owned.sol";
 
@@ -91,7 +91,7 @@ contract BaseOwnedSet is Owned {
 		_;
 	}
 
-	constructor(address[] _initial)
+	constructor(address[] memory _initial)
 		public
 	{
 		pending = _initial;
@@ -149,7 +149,7 @@ contract BaseOwnedSet is Owned {
 	function getValidators()
 		external
 		view
-		returns (address[])
+		returns (address[] memory)
 	{
 		return validators;
 	}
@@ -158,7 +158,7 @@ contract BaseOwnedSet is Owned {
 	function getPending()
 		external
 		view
-		returns (address[])
+		returns (address[] memory)
 	{
 		return pending;
 	}
@@ -180,7 +180,7 @@ contract BaseOwnedSet is Owned {
 		address _reporter,
 		address _validator,
 		uint _blockNumber,
-		bytes _proof
+		bytes memory _proof
 	)
 		internal
 		isValidator(_reporter)

@@ -15,7 +15,7 @@
 // A testable version of the `InnerOwnedSet` and `OuterSet` contracts that
 // exposes some internal state and overrides de default system address.
 
-pragma solidity ^0.4.22;
+pragma solidity >=0.5.0 <0.6.0;
 
 import "../RelayedOwnedSet.sol";
 import "../RelaySet.sol";
@@ -31,7 +31,7 @@ contract TestRelaySet is RelaySet {
 
 
 contract TestRelayedOwnedSet is RelayedOwnedSet {
-	constructor(address _outerSet, address[] _initial) RelayedOwnedSet(_outerSet, _initial)
+	constructor(address _outerSet, address[] memory _initial) RelayedOwnedSet(_outerSet, _initial)
 		public
 	{
 	}
